@@ -3,7 +3,6 @@ import Home from './pages/Home'
 import LuggageList from './pages/LuggageList'
 import RegisterLuggage from './pages/RegisterLuggage'
 import RoutesList from './pages/RoutesList'
-import RegisterRoute from './pages/AddRoute'
 import AddRoute from './pages/AddRoute'
 
 export default function App() {
