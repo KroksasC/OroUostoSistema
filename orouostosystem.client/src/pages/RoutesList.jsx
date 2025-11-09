@@ -47,7 +47,7 @@ export default function RoutesList() {
               <td>{route.duration}</td>
               <td>{route.altitude}</td>
               <td>
-                <button className="btn btn-primary btn-sm me-2" onClick={() => openEditModal(route)}>Edit</button>
+                <button className="btn btn-primary btn-sm me-2" onClick={() => openEditModal(route)}>Details</button>
                 <button className="btn btn-danger btn-sm">Delete</button>
               </td>
             </tr>
