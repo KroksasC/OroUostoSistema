@@ -29,6 +29,21 @@ export default function Home() {
       </div>
 
       <SearchLuggageModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <div className="card mt-4" style={{ maxWidth: '300px', margin: '0 auto' }}>
+        <div className="card-header text-center">
+          <h3>Services</h3>
+        </div>
+
+        <div className="card-body d-flex flex-column align-items-center">
+          <button
+            className="btn btn-primary mb-2 w-100"
+            onClick={() => navigate('/servicesList')}
+          >
+            Go to Services
+          </button>
+        </div>
+      </div>  
+
     </div>
   )
 }
