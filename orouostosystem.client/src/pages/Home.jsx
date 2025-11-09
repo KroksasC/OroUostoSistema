@@ -11,24 +11,57 @@ export default function Home() {
     <div className="container mt-5">
       <h1 className="text-center mb-4">Dashboard</h1>
 
-      <div className="card mb-4" style={{ maxWidth: '300px', margin: '0 auto' }}>
-        <div className="card-header text-center">
-          <h3>Luggage</h3>
+      <div className="row justify-content-center g-4">
+        {/* First card — Luggage */}
+        <div className="col-md-4">
+          <div className="card">
+            <div className="card-header text-center">
+              <h3>Luggage</h3>
+            </div>
+            <div className="card-body d-flex flex-column align-items-center">
+              <button
+                className="btn btn-primary mb-2 w-100"
+                onClick={() => navigate('/luggageList')}
+              >
+                Luggage List
+              </button>
+              <button
+                className="btn btn-success mb-2 w-100"
+                onClick={() => navigate('/registerLuggage')}
+              >
+                Register Luggage
+              </button>
+              <button
+                className="btn btn-warning mb-2 w-100"
+                onClick={() => setIsModalOpen(true)}
+              >
+                Search Luggage
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="card-body d-flex flex-column align-items-center">
-          <button className="btn btn-primary mb-2 w-100" onClick={() => navigate('/luggageList')}>
-            Luggage List
-          </button>
-          <button className="btn btn-success mb-2 w-100" onClick={() => navigate('/registerLuggage')}>
-            Register Luggage
-          </button>
-          <button className="btn btn-warning mb-2 w-100" onClick={() => setIsModalOpen(true)}>
-            Search Luggage
-          </button>
+
+        <div className="col-md-4">
+          <div className="card">
+            <div className="card-header text-center">
+              <h3>Pilots</h3>
+            </div>
+            <div className="card-body d-flex flex-column align-items-center">
+              <button
+                className="btn btn-primary mb-2 w-100"
+                onClick={() => navigate('/flightsListPilots')}
+              >
+                Flight List
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <SearchLuggageModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <SearchLuggageModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   )
 }
