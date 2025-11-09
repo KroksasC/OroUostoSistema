@@ -1,17 +1,25 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SearchLuggageModal from '../components/SearchLuggageModal'
+import UserCard from '../components/UserCard'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 export default function Home() {
   const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+    // Placeholder user data
+  const user = {
+    name: '[FirstName] [LastName]',
+    email: '[Email]',
+    loyaltyProgramLevel: '[LoyaltyLevel]'
+  }
+
   return (
     <div className="container mt-5">
       <h1 className="text-center mb-4">Dashboard</h1>
 
-      <div className="row justify-content-center">
+      <div className="row justify-content-center mb-4">
         <div className="col-md-4">
           <div className="card mb-4">
             <div className="card-header text-center">
@@ -30,6 +38,7 @@ export default function Home() {
             </div>
           </div>
         </div>
+
         <div className="col-md-4">
           <div className="card mb-4">
             <div className="card-header text-center">
@@ -47,7 +56,15 @@ export default function Home() {
         </div>
       </div>
 
+      {/* UserCard */}
+      <div className="row justify-content-center mb-4">
+        <div className="col-md-6">
+          <UserCard client={user} mode="form" />
+        </div>
+      </div>
+
       <SearchLuggageModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
       <div className="card mt-4" style={{ maxWidth: '300px', margin: '0 auto' }}>
         <div className="card-header text-center">
           <h3>Services</h3>
@@ -62,7 +79,6 @@ export default function Home() {
           </button>
         </div>
       </div>  
-
     </div>
   )
 }
