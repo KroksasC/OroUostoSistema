@@ -1,12 +1,12 @@
-export default function LuggageCard({ flight, mode = 'view', onEdit, onDelete }) {
+export default function LuggageCard({ luggage, mode = 'view', onEdit, onDelete }) {
   const isForm = mode === 'form'
 
   return (
     <div className="card mb-3" style={{ maxWidth: '400px' }}>
       <div className="card-body">
-        <p><strong>random text:</strong> {flight.id}</p>
-        <p><strong>Owner:</strong> {flight.owner}</p>
-        <p><strong>Destination:</strong> {flight.destination}</p>
+        <p><strong>Luggage ID:</strong> {luggage.id}</p>
+        <p><strong>Owner:</strong> {luggage.owner}</p>
+        <p><strong>Destination:</strong> {luggage.destination}</p>
 
         {isForm && (
           <div className="mt-3">
