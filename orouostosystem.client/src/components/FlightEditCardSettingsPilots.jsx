@@ -1,8 +1,13 @@
-import FlightCard from './FlightCardPilots'
+import FlightCard from './FlightEditCardPilots'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
-export default function FlightsInfoCardPilots({ isOpen, onClose, flight }) {
+export default function FlightEditCardPilots({ isOpen, onClose, flight, onUpdateFlight}) {
   if (!isOpen) return null
+
+  const handleSave = (updatedFlight) => {
+    onUpdateFlight(updatedFlight);
+
+  }
 
   return (
     <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
