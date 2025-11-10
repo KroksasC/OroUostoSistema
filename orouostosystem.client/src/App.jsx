@@ -11,6 +11,7 @@ import UserEdit from './pages/UserEdit'
 import UserFlightHistory from './pages/UserFlightHistory'
 import UserLoyaltyProgram from './pages/UserLoyaltyProgram'
 import UserFilter from './pages/UserFilter'
+import FlightsListPilots from './pages/FlightsListPilots';
 
 export default function App() {
   return (
@@ -20,6 +21,8 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/home" element={<Home />} />
       <Route path="/luggageList" element={<LuggageList />} />
+      <Route path="/flightsListPilots" element={<FlightsListPilots />}/>
+
       <Route path="/registerLuggage" element={<RegisterLuggage />} />
       <Route path="/routes" element={<RoutesList />} />
       <Route path="/addRoute" element={<AddRoute />} />

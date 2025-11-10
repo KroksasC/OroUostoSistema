@@ -8,7 +8,6 @@ export default function Home() {
   const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-    // Placeholder user data
   const user = {
     name: '[FirstName] [LastName]',
     email: '[Email]',
@@ -40,6 +39,24 @@ export default function Home() {
         </div>
 
         <div className="col-md-4">
+          <div className="card">
+            <div className="card-header text-center">
+              <h3>Pilots</h3>
+            </div>
+            <div className="card-body d-flex flex-column align-items-center">
+              <button
+                className="btn btn-primary mb-2 w-100"
+                onClick={() => navigate('/flightsListPilots')}
+              >
+                Flight List
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="row justify-content-center mb-4">
+        <div className="col-md-4">
           <div className="card mb-4">
             <div className="card-header text-center">
               <h3>Routes</h3>
@@ -56,29 +73,31 @@ export default function Home() {
         </div>
       </div>
 
-      {/* UserCard */}
       <div className="row justify-content-center mb-4">
         <div className="col-md-6">
           <UserCard client={user} mode="form" />
         </div>
       </div>
 
+      <div className="row justify-content-center mb-4">
+        <div className="col-md-4">
+          <div className="card mt-4">
+            <div className="card-header text-center">
+              <h3>Services</h3>
+            </div>
+            <div className="card-body d-flex flex-column align-items-center">
+              <button
+                className="btn btn-primary mb-2 w-100"
+                onClick={() => navigate('/servicesList')}
+              >
+                Go to Services
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <SearchLuggageModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-
-      <div className="card mt-4" style={{ maxWidth: '300px', margin: '0 auto' }}>
-        <div className="card-header text-center">
-          <h3>Services</h3>
-        </div>
-
-        <div className="card-body d-flex flex-column align-items-center">
-          <button
-            className="btn btn-primary mb-2 w-100"
-            onClick={() => navigate('/servicesList')}
-          >
-            Go to Services
-          </button>
-        </div>
-      </div>  
     </div>
   )
 }
