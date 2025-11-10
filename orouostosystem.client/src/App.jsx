@@ -11,6 +11,7 @@ import UserEdit from './pages/UserEdit'
 import UserFlightHistory from './pages/UserFlightHistory'
 import UserLoyaltyProgram from './pages/UserLoyaltyProgram'
 import UserFilter from './pages/UserFilter'
+import FlightsListPilots from './pages/FlightsListPilots';
 
 export default function App() {
   return (
