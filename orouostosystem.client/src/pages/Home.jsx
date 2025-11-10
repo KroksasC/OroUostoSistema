@@ -1,40 +1,38 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SearchLuggageModal from '../components/SearchLuggageModal'
+import UserCard from '../components/UserCard'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 export default function Home() {
   const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+    // Placeholder user data
+  const user = {
+    name: '[FirstName] [LastName]',
+    email: '[Email]',
+    loyaltyProgramLevel: '[LoyaltyLevel]'
+  }
+
   return (
     <div className="container mt-5">
       <h1 className="text-center mb-4">Dashboard</h1>
 
-      <div className="row justify-content-center g-4">
-        {/* First card — Luggage */}
+      <div className="row justify-content-center mb-4">
         <div className="col-md-4">
-          <div className="card">
+          <div className="card mb-4">
             <div className="card-header text-center">
               <h3>Luggage</h3>
             </div>
             <div className="card-body d-flex flex-column align-items-center">
-              <button
-                className="btn btn-primary mb-2 w-100"
-                onClick={() => navigate('/luggageList')}
-              >
+              <button className="btn btn-primary mb-2 w-100" onClick={() => navigate('/luggageList')}>
                 Luggage List
               </button>
-              <button
-                className="btn btn-success mb-2 w-100"
-                onClick={() => navigate('/registerLuggage')}
-              >
+              <button className="btn btn-success mb-2 w-100" onClick={() => navigate('/registerLuggage')}>
                 Register Luggage
               </button>
-              <button
-                className="btn btn-warning mb-2 w-100"
-                onClick={() => setIsModalOpen(true)}
-              >
+              <button className="btn btn-warning mb-2 w-100" onClick={() => setIsModalOpen(true)}>
                 Search Luggage
               </button>
             </div>
@@ -62,6 +60,44 @@ export default function Home() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+          <div className="card mb-4">
+            <div className="card-header text-center">
+              <h3>Routes</h3>
+            </div>
+            <div className="card-body d-flex flex-column align-items-center">
+              <button className="btn btn-primary mb-2 w-100" onClick={() => navigate('/routes')}>
+                Routes List
+              </button>
+              <button className="btn btn-success mb-2 w-100" onClick={() => navigate('/addRoute')}>
+                Add Route
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="row justify-content-center mb-4">
+        <div className="col-md-6">
+          <UserCard client={user} mode="form" />
+        </div>
+      </div>
+
+      <SearchLuggageModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+      <div className="card mt-4" style={{ maxWidth: '300px', margin: '0 auto' }}>
+        <div className="card-header text-center">
+          <h3>Services</h3>
+        </div>
+
+        <div className="card-body d-flex flex-column align-items-center">
+          <button
+            className="btn btn-primary mb-2 w-100"
+            onClick={() => navigate('/servicesList')}
+          >
+            Go to Services
+          </button>
+        </div>
+      </div>  
     </div>
   )
 }
