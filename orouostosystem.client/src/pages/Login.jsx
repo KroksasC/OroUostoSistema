@@ -1,64 +1,71 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-export default function Login() {
-    const navigate = useNavigate();
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+export default function LoginWindow() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-    const handleLogin = (e) => {
-        e.preventDefault();
-        navigate("/home");
-    };
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post("/api/account/login", {
+        email,
+        password
+      });
 
-    return (
-        <div className="container d-flex justify-content-center align-items-center vh-100">
-            <div className="card shadow" style={{ width: "400px" }}>
-                <div className="card-header text-center">
-                    <h3>Login</h3>
-                </div>
-                <div className="card-body">
-                    <form onSubmit={handleLogin}>
-                        <div className="mb-3">
-                            <label className="form-label">Email</label>
-                            <input
-                                type="email"
-                                className="form-control"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
+      const { token, userId, username, role } = response.data;
 
-                        <div className="mb-3">
-                            <label className="form-label">Password</label>
-                            <input
-                                type="password"
-                                className="form-control"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
+      localStorage.setItem("token", token);
+      localStorage.setItem("username", username);
+      localStorage.setItem("userId", userId)
+      localStorage.setItem("role", JSON.stringify(role));
 
-                        <button type="submit" className="btn btn-primary w-100 mb-3">
-                            Login
-                        </button>
+      if (role.includes("Admin")) {
+        navigate("/");
+      } 
 
-                        <div className="text-center">
-                            <span>Don't have an account? </span>
-                            <button
-                                type="button"
-                                className="btn btn-link p-0"
-                                onClick={() => navigate("/register")}
-                            >
-                                Register
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+    } catch (e) {
+      alert("Invalid email or password");
+    }
+  }
+
+  return (
+    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+      <div className="card p-4 shadow-sm" style={{ width: '350px' }}>
+        <h4 className="mb-3 text-center">Login</h4>
+
+        <div className="mb-3">
+          <label className="form-label">Email</label>
+          <input
+            type="email"
+            className="form-control"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="example@mail.com"
+          />
         </div>
-    );
+
+        <div className="mb-3">
+          <label className="form-label">Password</label>
+          <input
+            type="password"
+            className="form-control"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Password"
+          />
+        </div>
+
+        <button className="btn btn-primary w-100" onClick={handleLogin}>Login</button>
+
+        <div className="text-center mt-3">
+          <span>Don't have an account? </span>
+          <button className="btn btn-link p-0" onClick={() => navigate('/register')}>Register</button>
+          <button className="btn btn-link p-0" onClick={() => navigate('/')}>Return to home</button>
+        </div>
+      </div>
+    </div>
+  );
 }
