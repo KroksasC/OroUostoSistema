@@ -1,21 +1,40 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import SearchLuggageModal from '../components/SearchLuggageModal'
-import UserCard from '../components/UserCard'
-import 'bootstrap/dist/css/bootstrap.min.css'
+﻿import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import SearchLuggageModal from '../components/SearchLuggageModal';
+import UserCard from '../components/UserCard';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function Home() {
-  const navigate = useNavigate()
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const user = {
-    name: '[FirstName] [LastName]',
-    email: '[Email]',
-    loyaltyProgramLevel: '[LoyaltyLevel]'
-  }
+  const [user, setUser] = useState({
+    name: "",
+    email: "",
+    loyaltyProgramLevel: "",
+    role: []
+  });
+
+  useEffect(() => {
+    const username = localStorage.getItem("username");
+    const role = JSON.parse(localStorage.getItem("role"));
+
+    setUser({
+      name: username,
+      email: username,
+      loyaltyProgramLevel: "",
+      role: role ?? []
+    });
+  }, []);
 
   return (
     <div className="container mt-5">
+
+      {/* Logged user info */}
+      <div className="alert alert-info text-center">
+        Logged in as <b>{user.email}</b> | Role: <b>{user.role.join(", ")}</b>
+      </div>
+
       <h1 className="text-center mb-4">Dashboard</h1>
 
       <div className="row justify-content-center mb-4">
@@ -44,10 +63,7 @@ export default function Home() {
               <h3>Pilots</h3>
             </div>
             <div className="card-body d-flex flex-column align-items-center">
-              <button
-                className="btn btn-primary mb-2 w-100"
-                onClick={() => navigate('/flightsListPilots')}
-              >
+              <button className="btn btn-primary mb-2 w-100" onClick={() => navigate('/flightsListPilots')}>
                 Flight List
               </button>
             </div>
@@ -86,10 +102,7 @@ export default function Home() {
               <h3>Services</h3>
             </div>
             <div className="card-body d-flex flex-column align-items-center">
-              <button
-                className="btn btn-primary mb-2 w-100"
-                onClick={() => navigate('/servicesList')}
-              >
+              <button className="btn btn-primary mb-2 w-100" onClick={() => navigate('/servicesList')}>
                 Go to Services
               </button>
             </div>
@@ -99,5 +112,5 @@ export default function Home() {
 
       <SearchLuggageModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
-  )
+  );
 }

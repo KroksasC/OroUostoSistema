@@ -2,6 +2,7 @@
 using OroUostoSystem.Server.Data;
 using OroUostoSystem.Server.Models;
 using Microsoft.EntityFrameworkCore;
+using OroUostoSystem.Server.Utility;
 
 namespace OroUostoSystem.Server.DbInitializer
 {
@@ -19,6 +20,7 @@ namespace OroUostoSystem.Server.DbInitializer
             _userManager = userManager;
             _roleManager = roleManager;
         }
+
         public void Initialize()
         {
             try
@@ -33,24 +35,66 @@ namespace OroUostoSystem.Server.DbInitializer
                 throw new InvalidOperationException("Token key is not configured.");
             }
 
-            if (_context.Roles.Any(x => x.Name == Utility.Helper.Admin))
-            {
+            // If Admin role exists, assume everything initialized
+            if (_context.Roles.Any(x => x.Name == Helper.Admin))
                 return;
-            }
 
-            _roleManager.CreateAsync(new IdentityRole(Utility.Helper.Admin)).GetAwaiter().GetResult();
-            _roleManager.CreateAsync(new IdentityRole(Utility.Helper.RegisteredUser)).GetAwaiter().GetResult();
+            // CREATE ROLES
+            _roleManager.CreateAsync(new IdentityRole(Helper.Admin)).GetAwaiter().GetResult();
+            _roleManager.CreateAsync(new IdentityRole(Helper.RegisteredUser)).GetAwaiter().GetResult();
+            _roleManager.CreateAsync(new IdentityRole(Helper.Pilot)).GetAwaiter().GetResult();
+            _roleManager.CreateAsync(new IdentityRole(Helper.Client)).GetAwaiter().GetResult();
+            _roleManager.CreateAsync(new IdentityRole(Helper.Worker)).GetAwaiter().GetResult();
 
-            _userManager.CreateAsync(new User
+            // CREATE ADMIN
+            var admin = new User
             {
-                UserName = "admin",
+                UserName = "admin@gmail.com",
                 Email = "admin@gmail.com",
-                EmailConfirmed = true,
-            }, "Admin123!").GetAwaiter().GetResult();
+                EmailConfirmed = true
+            };
+            _userManager.CreateAsync(admin, "Admin123!").GetAwaiter().GetResult();
+            _userManager.AddToRoleAsync(admin, Helper.Admin).GetAwaiter().GetResult();
 
-            User user = _context.Users.FirstOrDefault(u => u.Email == "admin@gmail.com");
-            _userManager.AddToRoleAsync(user, Utility.Helper.Admin).GetAwaiter().GetResult();
+            // CREATE REGISTERED USER
+            var user = new User
+            {
+                UserName = "user@gmail.com",
+                Email = "user@gmail.com",
+                EmailConfirmed = true
+            };
+            _userManager.CreateAsync(user, "User123!").GetAwaiter().GetResult();
+            _userManager.AddToRoleAsync(user, Helper.RegisteredUser).GetAwaiter().GetResult();
 
+            // CREATE PILOT
+            var pilot = new User
+            {
+                UserName = "pilot@gmail.com",
+                Email = "pilot@gmail.com",
+                EmailConfirmed = true
+            };
+            _userManager.CreateAsync(pilot, "Pilot123!").GetAwaiter().GetResult();
+            _userManager.AddToRoleAsync(pilot, Helper.Pilot).GetAwaiter().GetResult();
+
+            // CREATE CLIENT
+            var client = new User
+            {
+                UserName = "client@gmail.com",
+                Email = "client@gmail.com",
+                EmailConfirmed = true
+            };
+            _userManager.CreateAsync(client, "Client123!").GetAwaiter().GetResult();
+            _userManager.AddToRoleAsync(client, Helper.Client).GetAwaiter().GetResult();
+
+            // CREATE WORKER
+            var worker = new User
+            {
+                UserName = "worker@gmail.com",
+                Email = "worker@gmail.com",
+                EmailConfirmed = true
+            };
+            _userManager.CreateAsync(worker, "Worker123!").GetAwaiter().GetResult();
+            _userManager.AddToRoleAsync(worker, Helper.Worker).GetAwaiter().GetResult();
         }
     }
 }

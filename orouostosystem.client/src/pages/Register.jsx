@@ -1,125 +1,90 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-export default function Register() {
-    const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        firstName: "",
-        lastName: "",
-        email: "",
-        password: "",
-        personalID: "",
-        phoneNumber: "",
-    });
+export default function RegisterWindow() {
+  const navigate = useNavigate();
+  const [Name, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+  const handleRegister = async () => {
+    if (password !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+    try {
+      await axios.post("api/account/register", {
+        Name,
+        email,
+        password,
+        confirmPassword
+      });
 
-    const handleRegister = (e) => {
-        e.preventDefault();
-        // Edit later
-        navigate("/login");
-    };
+      alert("Registration successful!");
+      navigate("/login");
+    } catch (e) {
+      alert("Registration failed.");
+    }
+  };
 
-    return (
-        <div className="container d-flex justify-content-center align-items-center vh-100">
-            <div className="card shadow" style={{ width: "500px" }}>
-                <div className="card-header text-center">
-                    <h3>Register</h3>
-                </div>
-                <div className="card-body">
-                    <form onSubmit={handleRegister}>
-                        <div className="row">
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label">First Name</label>
-                                <input
-                                    type="text"
-                                    name="firstName"
-                                    className="form-control"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
+  return (
+    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+      <div className="card p-4 shadow-sm" style={{ width: '350px' }}>
+        <h4 className="mb-3 text-center">Register</h4>
 
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label">Last Name</label>
-                                <input
-                                    type="text"
-                                    name="lastName"
-                                    className="form-control"
-                                    value={formData.lastName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Email</label>
-                            <input
-                                type="email"
-                                name="email"
-                                className="form-control"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Password</label>
-                            <input
-                                type="password"
-                                name="password"
-                                className="form-control"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Personal ID</label>
-                            <input
-                                type="text"
-                                name="personalID"
-                                className="form-control"
-                                value={formData.personalID}
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label">Phone Number</label>
-                            <input
-                                type="tel"
-                                name="phoneNumber"
-                                className="form-control"
-                                value={formData.phoneNumber}
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        <button type="submit" className="btn btn-success w-100 mb-3">
-                            Register
-                        </button>
-
-                        <div className="text-center">
-                            <span>Already have an account? </span>
-                            <button
-                                type="button"
-                                className="btn btn-link p-0"
-                                onClick={() => navigate("/login")}
-                            >
-                                Login
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+        <div className="mb-3">
+          <label className="form-label">Username</label>
+          <input
+            type="text"
+            className="form-control"
+            value={Name}
+            onChange={e => setUsername(e.target.value)}
+            placeholder="Your name"
+          />
         </div>
-    );
+
+        <div className="mb-3">
+          <label className="form-label">Email</label>
+          <input
+            type="email"
+            className="form-control"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="example@mail.com"
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Password</label>
+          <input
+            type="password"
+            className="form-control"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Password"
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Confirm Password</label>
+          <input
+            type="password"
+            className="form-control"
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+            placeholder="confirmPasssword"
+          />
+        </div>
+
+        <button className="btn btn-success w-100" onClick={handleRegister}>Register</button>
+
+        <div className="text-center mt-3">
+          <span>Already have an account? </span>
+          <button className="btn btn-link p-0" onClick={() => navigate('/login')}>Login</button>
+        </div>
+      </div>
+    </div>
+  );
 }

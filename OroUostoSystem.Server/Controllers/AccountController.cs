@@ -35,7 +35,7 @@ namespace MaistoSistema2.Server.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var user = await _userManager.FindByNameAsync(model.Email);
+            var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
                 return Unauthorized("Invalid username or password.");
@@ -66,7 +66,7 @@ namespace MaistoSistema2.Server.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var userExists = await _userManager.FindByNameAsync(model.Email);
+            var userExists = await _userManager.FindByEmailAsync(model.Email);
             if (userExists != null)
                 return BadRequest("User already exists!");
             User user = new()
