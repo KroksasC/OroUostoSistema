@@ -82,7 +82,7 @@ export default function RegisterLuggage() {
 
     if (response.ok) {
       alert("Luggage registered successfully!");
-      navigate("/luggageList");
+      navigate("/");
     } else {
       alert("Failed to register luggage.");
     }
