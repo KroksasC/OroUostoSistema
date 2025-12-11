@@ -29,4 +29,16 @@ public class ClientController : ControllerBase
 
         return Ok(clients);
     }
+
+    [HttpGet("byUser/{userId}")]
+    public async Task<ActionResult<int>> GetClientId(string userId)
+    {
+        var client = await _context.Clients.FirstOrDefaultAsync(c => c.UserId == userId);
+
+        if (client == null)
+            return NotFound("Client profile not found");
+
+        return Ok(client.Id);
+    }
+
 }
