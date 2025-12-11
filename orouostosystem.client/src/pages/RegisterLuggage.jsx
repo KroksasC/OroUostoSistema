@@ -42,7 +42,7 @@ export default function RegisterLuggage() {
     const load = async () => {
       try {
         const c = await fetch("/api/client");
-        const f = await fetch("/api/flights");
+        const f = await fetch("/api/flight");
 
         setClients(await c.json());
         setFlights(await f.json());

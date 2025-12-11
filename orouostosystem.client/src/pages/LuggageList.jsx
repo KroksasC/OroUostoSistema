@@ -7,37 +7,54 @@ import "bootstrap/dist/css/bootstrap.min.css";
 export default function LuggageList() {
   const navigate = useNavigate();
 
+  const [allLuggage, setAllLuggage] = useState([]);
   const [luggageList, setLuggageList] = useState([]);
+
   const [selectedLuggage, setSelectedLuggage] = useState(null);
   const [locationLuggage, setLocationLuggage] = useState(null);
 
   const [role, setRole] = useState([]);
 
-  // Load user role from localStorage
+  // Filters
+  const [filterFlight, setFilterFlight] = useState("");
+  const [filterMinWeight, setFilterMinWeight] = useState("");
+  const [filterMaxWeight, setFilterMaxWeight] = useState("");
+
+  // Load roles
   useEffect(() => {
     const storedRole = JSON.parse(localStorage.getItem("role")) ?? [];
     setRole(storedRole);
 
-    // Redirect if unauthorized
     const allowed = ["Admin", "Worker", "Client"];
     if (!storedRole.some((r) => allowed.includes(r))) {
-      navigate("/"); // redirect to home
+      navigate("/");
     }
   }, [navigate]);
 
-  // Helper functions
   const hasRole = (r) => role.includes(r);
   const isAdmin = hasRole("Admin");
   const isWorker = hasRole("Worker");
   const isClient = hasRole("Client");
 
-  // Load luggage from API
+  // Load luggage
   useEffect(() => {
     const loadData = async () => {
       try {
         const res = await fetch("/api/baggage");
         const data = await res.json();
-        setLuggageList(data);
+
+        const clientId = Number(localStorage.getItem("clientId"));
+        const storedRole = JSON.parse(localStorage.getItem("role")) ?? [];
+
+        let filtered = data;
+
+        // FILTER BY ROLE
+        if (storedRole.includes("Client") && clientId) {
+          filtered = filtered.filter((b) => b.clientId === clientId);
+        }
+
+        setAllLuggage(filtered);
+        setLuggageList(filtered);
       } catch (error) {
         console.error("Failed to load luggage:", error);
       }
@@ -45,10 +62,83 @@ export default function LuggageList() {
     loadData();
   }, []);
 
+  // Apply filters
+  useEffect(() => {
+    let filtered = [...allLuggage];
+
+    // Filter by flight number
+    if (filterFlight.trim() !== "") {
+      filtered = filtered.filter((b) =>
+        b.flightNumber.toLowerCase().includes(filterFlight.toLowerCase())
+      );
+    }
+
+    // Filter by min weight
+    if (filterMinWeight !== "") {
+      filtered = filtered.filter((b) => b.weight >= Number(filterMinWeight));
+    }
+
+    // Filter by max weight
+    if (filterMaxWeight !== "") {
+      filtered = filtered.filter((b) => b.weight <= Number(filterMaxWeight));
+    }
+
+    setLuggageList(filtered);
+  }, [filterFlight, filterMinWeight, filterMaxWeight, allLuggage]);
+
+
   return (
-    <div className="container mt-5" style={{ maxWidth: "800px" }}>
+    <div className="container mt-5" style={{ maxWidth: "900px" }}>
       <h2 className="text-center mb-4">Luggage List</h2>
 
+      {/* FILTERS */}
+      <div className="card p-3 mb-4 shadow-sm">
+        <div className="row g-3">
+          <div className="col-md-4">
+            <input
+              className="form-control"
+              placeholder="Filter by Flight Number..."
+              value={filterFlight}
+              onChange={(e) => setFilterFlight(e.target.value)}
+            />
+          </div>
+
+          <div className="col-md-3">
+            <input
+              type="number"
+              className="form-control"
+              placeholder="Min Weight"
+              value={filterMinWeight}
+              onChange={(e) => setFilterMinWeight(e.target.value)}
+            />
+          </div>
+
+          <div className="col-md-3">
+            <input
+              type="number"
+              className="form-control"
+              placeholder="Max Weight"
+              value={filterMaxWeight}
+              onChange={(e) => setFilterMaxWeight(e.target.value)}
+            />
+          </div>
+
+          <div className="col-md-2">
+            <button
+              className="btn btn-secondary w-100"
+              onClick={() => {
+                setFilterFlight("");
+                setFilterMinWeight("");
+                setFilterMaxWeight("");
+              }}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* TABLE */}
       <table className="table table-striped align-middle">
         <thead>
           <tr>
@@ -76,7 +166,6 @@ export default function LuggageList() {
                 <td>{luggage.size}</td>
 
                 <td>
-                  {/* DETAILS — visible to Admin, Worker, Client */}
                   {(isAdmin || isWorker || isClient) && (
                     <button
                       className="btn btn-primary btn-sm me-2"
@@ -86,7 +175,6 @@ export default function LuggageList() {
                     </button>
                   )}
 
-                  {/* LOCATION — visible to Admin, Client */}
                   {(isAdmin || isClient) && (
                     <button
                       className="btn btn-danger btn-sm"
@@ -102,13 +190,14 @@ export default function LuggageList() {
         </tbody>
       </table>
 
+      {/* BACK BUTTON */}
       <div className="text-center mt-4">
         <button className="btn btn-secondary" onClick={() => navigate("/")}>
           Back
         </button>
       </div>
 
-      {/* DETAILS MODAL */}
+      {/* MODALS */}
       {selectedLuggage && (
         <LuggageDetailsModal
           isOpen={true}
@@ -117,7 +206,6 @@ export default function LuggageList() {
         />
       )}
 
-      {/* LOCATION MODAL */}
       {locationLuggage && (
         <LuggageLocationModal
           isOpen={true}

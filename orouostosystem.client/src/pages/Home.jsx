@@ -27,6 +27,16 @@ export default function Home() {
     });
   }, []);
 
+  const userId = localStorage.getItem("userId");
+
+  if (userId) {
+    fetch(`/api/client/byUser/${userId}`)
+      .then(res => res.json())
+      .then(clientId => localStorage.setItem("clientId", clientId))
+      .catch(() => console.warn("This user has no client profile."));
+  }
+
+
   const hasRole = (r) => user.role.includes(r);
   const isWorker = hasRole("Worker");
   const isAdmin = hasRole("Admin");
