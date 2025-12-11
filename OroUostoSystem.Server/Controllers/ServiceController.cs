@@ -26,7 +26,7 @@ namespace OroUostoSystem.Server.Controllers
             if (string.IsNullOrWhiteSpace(dto.Email))
                 return BadRequest("Email is required.");
 
-            var client = await _context.Clients.FindAsync(dto.ClientId);
+            var client = await _context.Clients.FirstOrDefaultAsync(c => c.UserId == dto.UserId);
             if (client == null)
                 return BadRequest("Client not found.");
 
@@ -39,7 +39,7 @@ namespace OroUostoSystem.Server.Controllers
                 OrderDate = dto.OrderDate,
                 Quantity = dto.Quantity,
                 TotalPrice = dto.TotalPrice,
-                ClientId = dto.ClientId,
+                ClientId = client.Id,
                 ServiceId = dto.ServiceId,
                 Client = client,
                 Service = service
@@ -102,7 +102,7 @@ namespace OroUostoSystem.Server.Controllers
                 return BadRequest("Failed to create service.");
             }
 
-            return Ok(service);
+            return Ok("Created successfully!");
         }
         [HttpPut("Update/{id}")]
         public async Task<IActionResult> UpdateService(int id, [FromBody] UpdateServiceDTO dto)
@@ -126,8 +126,53 @@ namespace OroUostoSystem.Server.Controllers
                 return BadRequest("Failed to update service.");
             }
 
-            return Ok(service);
+            return Ok("Updated successfuly!");
         }
+        [HttpDelete("Delete/{id}")]
+        public async Task<IActionResult> DeleteService(int id)
+        {
+            var service = await _context.Services
+                .Include(s => s.ServiceOrders)
+                .FirstOrDefaultAsync(s => s.Id == id);
 
+            if (service == null)
+                return NotFound("Service not found.");
+
+            try
+            {
+                // 1️⃣ Delete all related service orders
+                if (service.ServiceOrders.Any())
+                {
+                    _context.ServiceOrders.RemoveRange(service.ServiceOrders);
+                }
+
+                // 2️⃣ Delete service
+                _context.Services.Remove(service);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error deleting service: " + ex.Message);
+                return BadRequest("Failed to delete service.");
+            }
+
+            return Ok("Service and all related service orders deleted successfully.");
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAllServices()
+        {
+            var services = await _context.Services
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Title,
+                    s.Price,
+                    s.Category,
+                    s.Description
+                })
+                .ToListAsync();
+
+            return Ok(services);
+        }
     }
 }

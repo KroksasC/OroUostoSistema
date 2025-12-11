@@ -1,33 +1,58 @@
-import { useState } from 'react'
-import 'bootstrap/dist/css/bootstrap.min.css'
+import { useState } from 'react';
+import axios from 'axios';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function CreateServiceModal({ show, onClose, onCreate }) {
-  const [name, setName] = useState('')
-  const [category, setCategory] = useState('')
-  const [price, setPrice] = useState('')
-  const [description, setDescription] = useState('')
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState('');
+  const [price, setPrice] = useState('');
+  const [description, setDescription] = useState('');
 
-  if (!show) return null
+  if (!show) return null;
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!name || !category || !price) return
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!name || !category || !price) return;
 
-    onCreate({
-      id: Date.now(),
-      name,
+    // TEMP employeeId (you can replace later with dropdown from backend)
+    const employeeId = 1;
+
+    const dto = {
+      title: name,
       category,
       price: parseFloat(price),
-      description
-    })
+      description: description,
+      employeeId: employeeId
+    };
 
-    // Clear fields and close modal
-    setName('')
-    setCategory('')
-    setPrice('')
-    setDescription('')
-    onClose()
-  }
+    try {
+      const response = await axios.post(
+        "/api/service/create",
+        dto,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
+
+      onCreate(response.data);
+
+      setName('');
+      setCategory('');
+      setPrice('');
+      setDescription('');
+
+      onClose();
+      alert("Service created successfully!");
+
+      window.location.reload();
+
+    } catch (error) {
+      console.error("Error creating service:", error);
+      alert("Failed to create service.");
+    }
+  };
 
   return (
     <div
@@ -41,8 +66,10 @@ export default function CreateServiceModal({ show, onClose, onCreate }) {
             <h5 className="modal-title">Create New Service</h5>
             <button type="button" className="btn-close" onClick={onClose}></button>
           </div>
+
           <div className="modal-body">
             <form onSubmit={handleSubmit}>
+
               <div className="mb-3">
                 <label className="form-label">Name</label>
                 <input
@@ -53,6 +80,7 @@ export default function CreateServiceModal({ show, onClose, onCreate }) {
                   required
                 />
               </div>
+
               <div className="mb-3">
                 <label className="form-label">Category</label>
                 <input
@@ -63,6 +91,7 @@ export default function CreateServiceModal({ show, onClose, onCreate }) {
                   required
                 />
               </div>
+
               <div className="mb-3">
                 <label className="form-label">Price</label>
                 <input
@@ -73,6 +102,7 @@ export default function CreateServiceModal({ show, onClose, onCreate }) {
                   required
                 />
               </div>
+
               <div className="mb-3">
                 <label className="form-label">Description</label>
                 <textarea
@@ -81,13 +111,16 @@ export default function CreateServiceModal({ show, onClose, onCreate }) {
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
+
               <button type="submit" className="btn btn-primary w-100">
                 Create
               </button>
+
             </form>
           </div>
+
         </div>
       </div>
     </div>
-  )
+  );
 }

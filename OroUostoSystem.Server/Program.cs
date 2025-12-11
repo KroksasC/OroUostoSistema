@@ -1,5 +1,6 @@
 using Microsoft.OpenApi.Models;
 using OroUostoSystem.Server.Extensions;
+using OroUostoSystem.Server.Services;
 using OroUostoSystem.Server.Utility; // Add this for BackgroundReminderService
 
 namespace OroUostoSystem.Server
@@ -45,6 +46,7 @@ namespace OroUostoSystem.Server
             // ADD JUST THIS ONE LINE - BackgroundReminderService
             builder.Services.AddHostedService<BackgroundReminderService>();
 
+            builder.Services.AddScoped<EmailService>();
             // COMMENT OUT these lines for now (they're causing errors):
             // builder.Services.AddScoped<IEmailService, EmailService>();
             // builder.Services.AddScoped<IReminderService, ReminderService>();

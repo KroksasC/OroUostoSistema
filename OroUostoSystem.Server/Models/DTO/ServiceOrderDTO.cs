@@ -9,7 +9,7 @@ namespace OroUostoSystem.Server.Models.DTO
         public DateTime OrderDate { get; set; }
         public int Quantity { get; set; }
         public double TotalPrice { get; set; }
-        public int ClientId { get; set; }
+        public string UserId { get; set; }
         public int ServiceId { get; set; }
     }
 }
