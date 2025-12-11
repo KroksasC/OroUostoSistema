@@ -49,7 +49,6 @@ namespace OroUostoSystem.Server.DbInitializer
                 await CreateUserWithRole("client@gmail.com", "Client123!", Helper.Client);
                 await CreateUserWithRole("worker@gmail.com", "Worker123!", Helper.Worker);
             }
-
             // ==========================================
             //  SEED CLIENTS
             // ==========================================
@@ -68,6 +67,81 @@ namespace OroUostoSystem.Server.DbInitializer
 
                 _context.Clients.Add(client);
                 await _context.SaveChangesAsync();
+            }
+            // ==========================================
+            //  SEED WORKER EMPLOYEE
+            // ==========================================
+            if (!_context.Employees.Any())
+            {
+                var workerUser = await _userManager.FindByEmailAsync("worker@gmail.com");
+
+                var employee = new Employee
+                {
+                    UserId = workerUser.Id,
+                    WorkEmail = "worker@gmail.com",
+                    Position = "Ground Staff",
+                    HireDate = DateTime.Now.AddYears(-2),
+                    Status = "Active",
+                    WorkPhone = "+37060000001"
+                };
+
+                _context.Employees.Add(employee);
+                await _context.SaveChangesAsync();
+            }
+            // ==========================================
+            //  SEED SERVICES
+            // ==========================================
+            if (!_context.Services.Any())
+            {
+                // Get any existing employee to assign
+                var employee = _context.Employees.FirstOrDefault();
+
+                if (employee != null)
+                {
+                    var service = new Service
+                    {
+                        Title = "Aircraft Cleaning",
+                        Price = 150.00,
+                        Category = "Maintenance",
+                        Description = "Detailed interior and exterior aircraft cleaning.",
+                        EmployeeId = employee.Id
+                    };
+
+                    _context.Services.Add(service);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            // ==========================================
+            //  SEED SERVICE ORDERS
+            // ==========================================
+            if (!_context.ServiceOrders.Any())
+            {
+                var client = _context.Clients.FirstOrDefault();
+                var service = _context.Services.FirstOrDefault();
+
+                if (client != null && service != null)
+                {
+                    var order1 = new ServiceOrder
+                    {
+                        OrderDate = DateTime.Now.AddDays(-2),
+                        Quantity = 1,
+                        TotalPrice = service.Price,
+                        ClientId = client.Id,
+                        ServiceId = service.Id
+                    };
+
+                    var order2 = new ServiceOrder
+                    {
+                        OrderDate = DateTime.Now.AddDays(-1),
+                        Quantity = 2,
+                        TotalPrice = service.Price * 2,
+                        ClientId = client.Id,
+                        ServiceId = service.Id
+                    };
+
+                    _context.ServiceOrders.AddRange(order1, order2);
+                    await _context.SaveChangesAsync();
+                }
             }
 
             // ==========================================
