@@ -49,6 +49,31 @@ namespace OroUostoSystem.Server.DbInitializer
                 await CreateUserWithRole("client@gmail.com", "Client123!", Helper.Client);
                 await CreateUserWithRole("worker@gmail.com", "Worker123!", Helper.Worker);
             }
+            var admin = await _userManager.FindByEmailAsync("admin@gmail.com");
+            admin.FirstName = "System";
+            admin.LastName = "Administrator";
+            await _userManager.UpdateAsync(admin);
+
+            var regUser = await _userManager.FindByEmailAsync("user@gmail.com");
+            regUser.FirstName = "Regular";
+            regUser.LastName = "User";
+            await _userManager.UpdateAsync(regUser);
+
+            var pilot = await _userManager.FindByEmailAsync("pilot@gmail.com");
+            pilot.FirstName = "John";
+            pilot.LastName = "Eagle";
+            await _userManager.UpdateAsync(pilot);
+
+            var clientt = await _userManager.FindByEmailAsync("client@gmail.com");
+            clientt.FirstName = "Maria";
+            clientt.LastName = "Kowalski";
+            await _userManager.UpdateAsync(clientt);
+
+            var worker = await _userManager.FindByEmailAsync("worker@gmail.com");
+            worker.FirstName = "David";
+            worker.LastName = "Clark";
+            await _userManager.UpdateAsync(worker);
+
 
             // ==========================================
             //  SEED CLIENTS
