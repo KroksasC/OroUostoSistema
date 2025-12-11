@@ -12,7 +12,8 @@ namespace OroUostoSystem.Server.DbInitializer
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
-        public DBInitializer(DataContext context,
+        public DBInitializer(
+            DataContext context,
             UserManager<User> userManager,
             RoleManager<IdentityRole> roleManager)
         {
@@ -21,80 +22,166 @@ namespace OroUostoSystem.Server.DbInitializer
             _roleManager = roleManager;
         }
 
-        public void Initialize()
+        public async Task Initialize()
         {
-            try
+            await _context.Database.MigrateAsync();
+
+            // ==========================================
+            //  SEED ROLES (only if empty)
+            // ==========================================
+            if (!_roleManager.Roles.Any())
             {
-                if (_context.Database.GetPendingMigrations().Count() > 0)
+                await _roleManager.CreateAsync(new IdentityRole(Helper.Admin));
+                await _roleManager.CreateAsync(new IdentityRole(Helper.RegisteredUser));
+                await _roleManager.CreateAsync(new IdentityRole(Helper.Pilot));
+                await _roleManager.CreateAsync(new IdentityRole(Helper.Client));
+                await _roleManager.CreateAsync(new IdentityRole(Helper.Worker));
+            }
+
+            // ==========================================
+            //  SEED USERS (only if empty)
+            // ==========================================
+            if (!_userManager.Users.Any())
+            {
+                await CreateUserWithRole("admin@gmail.com", "Admin123!", Helper.Admin);
+                await CreateUserWithRole("user@gmail.com", "User123!", Helper.RegisteredUser);
+                await CreateUserWithRole("pilot@gmail.com", "Pilot123!", Helper.Pilot);
+                await CreateUserWithRole("client@gmail.com", "Client123!", Helper.Client);
+                await CreateUserWithRole("worker@gmail.com", "Worker123!", Helper.Worker);
+            }
+
+            // ==========================================
+            //  SEED CLIENTS
+            // ==========================================
+            if (!_context.Clients.Any())
+            {
+                var clientUser = await _userManager.FindByEmailAsync("client@gmail.com");
+
+                var client = new Client
                 {
-                    _context.Database.Migrate();
-                }
+                    UserId = clientUser.Id,
+                    BirthDate = new DateTime(1990, 5, 10),
+                    LoyaltyLevel = "Silver",
+                    Points = 1200,
+                    RegistrationDate = DateTime.Now.AddYears(-1)
+                };
+
+                _context.Clients.Add(client);
+                await _context.SaveChangesAsync();
             }
-            catch (Exception)
+
+            // ==========================================
+            //  SEED FLIGHTS
+            // ==========================================
+            if (!_context.Flights.Any())
             {
-                throw new InvalidOperationException("Token key is not configured.");
+                var flight1 = new Flight
+                {
+                    AssignedPilot = true,
+                    AssignedMainPilot = false,
+                    WorkingHours = 3.5f,
+                    FlightDate = DateTime.Now.AddDays(-1),
+                    Aircraft = "Airbus A320",
+                    FlightNumber = "FL1001",
+                    Status = "Arrived"
+                };
+
+                var flight2 = new Flight
+                {
+                    AssignedPilot = true,
+                    AssignedMainPilot = true,
+                    WorkingHours = 2.2f,
+                    FlightDate = DateTime.Now,
+                    Aircraft = "Boeing 737",
+                    FlightNumber = "FL2002",
+                    Status = "Boarding"
+                };
+
+                _context.Flights.AddRange(flight1, flight2);
+                await _context.SaveChangesAsync();
             }
 
-            // If Admin role exists, assume everything initialized
-            if (_context.Roles.Any(x => x.Name == Helper.Admin))
-                return;
-
-            // CREATE ROLES
-            _roleManager.CreateAsync(new IdentityRole(Helper.Admin)).GetAwaiter().GetResult();
-            _roleManager.CreateAsync(new IdentityRole(Helper.RegisteredUser)).GetAwaiter().GetResult();
-            _roleManager.CreateAsync(new IdentityRole(Helper.Pilot)).GetAwaiter().GetResult();
-            _roleManager.CreateAsync(new IdentityRole(Helper.Client)).GetAwaiter().GetResult();
-            _roleManager.CreateAsync(new IdentityRole(Helper.Worker)).GetAwaiter().GetResult();
-
-            // CREATE ADMIN
-            var admin = new User
+            // ==========================================
+            //  SEED BAGGAGE
+            // ==========================================
+            if (!_context.Baggages.Any())
             {
-                UserName = "admin@gmail.com",
-                Email = "admin@gmail.com",
-                EmailConfirmed = true
-            };
-            _userManager.CreateAsync(admin, "Admin123!").GetAwaiter().GetResult();
-            _userManager.AddToRoleAsync(admin, Helper.Admin).GetAwaiter().GetResult();
+                var client = _context.Clients.First();
+                var flights = _context.Flights.Take(2).ToList();
 
-            // CREATE REGISTERED USER
+                var baggage1 = new Baggage
+                {
+                    Weight = 23.5,
+                    RegistrationDate = DateTime.Now.AddHours(-5),
+                    Comment = "Blue suitcase with stickers",
+                    Size = "Medium",
+                    ClientId = client.Id,
+                    FlightId = flights[0].Id
+                };
+
+                var baggage2 = new Baggage
+                {
+                    Weight = 18.2,
+                    RegistrationDate = DateTime.Now.AddHours(-2),
+                    Comment = "Red backpack",
+                    Size = "Small",
+                    ClientId = client.Id,
+                    FlightId = flights[1].Id
+                };
+
+                _context.Baggages.AddRange(baggage1, baggage2);
+                await _context.SaveChangesAsync();
+            }
+
+            // ==========================================
+            //  SEED BAGGAGE TRACKING
+            // ==========================================
+            if (!_context.BaggageTrackings.Any())
+            {
+                var baggage = _context.Baggages.ToList();
+
+                var tracking = new List<BaggageTracking>
+                {
+                    new(){
+                        BaggageId = baggage[0].Id,
+                        Time = DateTime.Now.AddHours(-4),
+                        Location = "Check-in Zone A",
+                        Status = "Checked-In"
+                    },
+                    new(){
+                        BaggageId = baggage[0].Id,
+                        Time = DateTime.Now.AddHours(-3),
+                        Location = "Sorting Facility",
+                        Status = "In Transit"
+                    },
+                    new(){
+                        BaggageId = baggage[1].Id,
+                        Time = DateTime.Now.AddHours(-1),
+                        Location = "Gate 12",
+                        Status = "Loaded onto Aircraft"
+                    }
+                };
+
+                _context.BaggageTrackings.AddRange(tracking);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        // =====================================================
+        //  HELPER FOR USER CREATION + ROLE ASSIGNMENT
+        // =====================================================
+        private async Task CreateUserWithRole(string email, string password, string role)
+        {
             var user = new User
             {
-                UserName = "user@gmail.com",
-                Email = "user@gmail.com",
+                UserName = email,
+                Email = email,
                 EmailConfirmed = true
             };
-            _userManager.CreateAsync(user, "User123!").GetAwaiter().GetResult();
-            _userManager.AddToRoleAsync(user, Helper.RegisteredUser).GetAwaiter().GetResult();
 
-            // CREATE PILOT
-            var pilot = new User
-            {
-                UserName = "pilot@gmail.com",
-                Email = "pilot@gmail.com",
-                EmailConfirmed = true
-            };
-            _userManager.CreateAsync(pilot, "Pilot123!").GetAwaiter().GetResult();
-            _userManager.AddToRoleAsync(pilot, Helper.Pilot).GetAwaiter().GetResult();
-
-            // CREATE CLIENT
-            var client = new User
-            {
-                UserName = "client@gmail.com",
-                Email = "client@gmail.com",
-                EmailConfirmed = true
-            };
-            _userManager.CreateAsync(client, "Client123!").GetAwaiter().GetResult();
-            _userManager.AddToRoleAsync(client, Helper.Client).GetAwaiter().GetResult();
-
-            // CREATE WORKER
-            var worker = new User
-            {
-                UserName = "worker@gmail.com",
-                Email = "worker@gmail.com",
-                EmailConfirmed = true
-            };
-            _userManager.CreateAsync(worker, "Worker123!").GetAwaiter().GetResult();
-            _userManager.AddToRoleAsync(worker, Helper.Worker).GetAwaiter().GetResult();
+            await _userManager.CreateAsync(user, password);
+            await _context.SaveChangesAsync();    // IMPORTANT for SQLite
+            await _userManager.AddToRoleAsync(user, role);
         }
     }
 }

@@ -54,7 +54,7 @@ namespace OroUostoSystem.Server
                 try
                 {
                     var dbInitializer = services.GetRequiredService<OroUostoSystem.Server.DbInitializer.IDbinitializer>();
-                    dbInitializer.Initialize();
+                    dbInitializer.Initialize().GetAwaiter().GetResult();
                 }
                 catch (Exception ex)
                 {
