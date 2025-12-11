@@ -14,7 +14,7 @@
         public int FlightId { get; set; }
         public string FlightNumber { get; set; } = string.Empty;
 
-        public List<BaggageTrackingDto> Tracking { get; set; } = new();
+        public BaggageLiveLocationDto? Tracking { get; set; }
     }
 
 }

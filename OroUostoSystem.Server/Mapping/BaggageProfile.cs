@@ -14,12 +14,14 @@ namespace OroUostoSystem.Server.Mapping
                 .ForMember(dest => dest.ClientName, opt => opt.MapFrom(src => src.Client.User.FirstName + " " + src.Client.User.LastName))
                 .ForMember(dest => dest.FlightNumber, opt => opt.MapFrom(src => src.Flight.FlightNumber));
 
-            CreateMap<BaggageTracking, BaggageTrackingDto>();
-
             CreateMap<BaggageCreateDto, Baggage>()
                 .ForMember(dest => dest.RegistrationDate, opt => opt.MapFrom(_ => DateTime.Now));
 
             CreateMap<BaggageUpdateDto, Baggage>();
+
+            CreateMap<BaggageTracking, BaggageLiveLocationDto>()
+                .ForMember(d => d.UpdatedAt, o => o.MapFrom(s => s.UpdatedAt));
+
         }
     }
 }

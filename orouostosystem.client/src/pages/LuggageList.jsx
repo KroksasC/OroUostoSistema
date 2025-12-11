@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LuggageDetailsModal from "../components/LuggageDetailsModal";
 import LuggageLocationModal from "../components/LuggageLocationModal";
@@ -6,47 +6,99 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function LuggageList() {
   const navigate = useNavigate();
+
+  const [luggageList, setLuggageList] = useState([]);
   const [selectedLuggage, setSelectedLuggage] = useState(null);
   const [locationLuggage, setLocationLuggage] = useState(null);
 
-  const sampleLuggages = [
-    { id: "L001", owner: "John Doe", destination: "Paris" },
-    { id: "L002", owner: "Jane Smith", destination: "London" },
-  ];
+  const [role, setRole] = useState([]);
+
+  // Load user role from localStorage
+  useEffect(() => {
+    const storedRole = JSON.parse(localStorage.getItem("role")) ?? [];
+    setRole(storedRole);
+
+    // Redirect if unauthorized
+    const allowed = ["Admin", "Worker", "Client"];
+    if (!storedRole.some((r) => allowed.includes(r))) {
+      navigate("/"); // redirect to home
+    }
+  }, [navigate]);
+
+  // Helper functions
+  const hasRole = (r) => role.includes(r);
+  const isAdmin = hasRole("Admin");
+  const isWorker = hasRole("Worker");
+  const isClient = hasRole("Client");
+
+  // Load luggage from API
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const res = await fetch("/api/baggage");
+        const data = await res.json();
+        setLuggageList(data);
+      } catch (error) {
+        console.error("Failed to load luggage:", error);
+      }
+    };
+    loadData();
+  }, []);
 
   return (
-    <div className="container mt-5" style={{ maxWidth: "700px" }}>
+    <div className="container mt-5" style={{ maxWidth: "800px" }}>
       <h2 className="text-center mb-4">Luggage List</h2>
 
-      <table className="table table-striped">
+      <table className="table table-striped align-middle">
         <thead>
           <tr>
             <th>Owner</th>
-            <th>Destination</th>
+            <th>Flight</th>
+            <th>Weight</th>
+            <th>Size</th>
             <th>Actions</th>
           </tr>
         </thead>
+
         <tbody>
-          {sampleLuggages.map((luggage) => (
-            <tr key={luggage.id}>
-              <td>{luggage.owner}</td>
-              <td>{luggage.destination}</td>
-              <td>
-                <button
-                  className="btn btn-primary btn-sm me-2"
-                  onClick={() => setSelectedLuggage(luggage)}
-                >
-                  Details
-                </button>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => setLocationLuggage(luggage)}
-                >
-                  Location
-                </button>
+          {luggageList.length === 0 ? (
+            <tr>
+              <td colSpan="5" className="text-center text-muted">
+                No luggage found.
               </td>
             </tr>
-          ))}
+          ) : (
+            luggageList.map((luggage) => (
+              <tr key={luggage.id}>
+                <td>{luggage.clientName}</td>
+                <td>{luggage.flightNumber}</td>
+                <td>{luggage.weight} kg</td>
+                <td>{luggage.size}</td>
+
+                <td>
+                  {/* DETAILS — visible to Admin, Worker, Client */}
+                  {(isAdmin || isWorker || isClient) && (
+                    <button
+                      className="btn btn-primary btn-sm me-2"
+                      onClick={() => setSelectedLuggage(luggage)}
+                    >
+                      Details
+                    </button>
+                  )}
+
+                  {/* LOCATION — visible to Admin, Client */}
+                  {(isAdmin || isClient) && (
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => setLocationLuggage(luggage)}
+                    >
+                      Location
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
 
@@ -56,17 +108,19 @@ export default function LuggageList() {
         </button>
       </div>
 
+      {/* DETAILS MODAL */}
       {selectedLuggage && (
         <LuggageDetailsModal
-          isOpen={!!selectedLuggage}
+          isOpen={true}
           luggage={selectedLuggage}
           onClose={() => setSelectedLuggage(null)}
         />
       )}
 
+      {/* LOCATION MODAL */}
       {locationLuggage && (
         <LuggageLocationModal
-          isOpen={!!locationLuggage}
+          isOpen={true}
           luggage={locationLuggage}
           onClose={() => setLocationLuggage(null)}
         />

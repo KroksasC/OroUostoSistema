@@ -22,9 +22,7 @@ export default function LoginWindow() {
       localStorage.setItem("userId", userId)
       localStorage.setItem("role", JSON.stringify(role));
 
-      if (role.includes("Admin")) {
-        navigate("/");
-      } 
+      navigate("/");
 
     } catch (e) {
       alert("Invalid email or password");
