@@ -1,6 +1,6 @@
-
 using Microsoft.OpenApi.Models;
 using OroUostoSystem.Server.Extensions;
+using OroUostoSystem.Server.Utility; // Add this for BackgroundReminderService
 
 namespace OroUostoSystem.Server
 {
@@ -10,6 +10,7 @@ namespace OroUostoSystem.Server
         {
             var builder = WebApplication.CreateBuilder(args);
             //builder.WebHost.UseUrls("http://0.0.0.0:80");
+            
             // Add services to the container.
             builder.Services.AddApplicationServices(builder.Configuration);
 
@@ -40,7 +41,12 @@ namespace OroUostoSystem.Server
                 });
             });
 
+            // ADD JUST THIS ONE LINE - BackgroundReminderService
+            builder.Services.AddHostedService<BackgroundReminderService>();
 
+            // COMMENT OUT these lines for now (they're causing errors):
+            // builder.Services.AddScoped<IEmailService, EmailService>();
+            // builder.Services.AddScoped<IReminderService, ReminderService>();
 
             var app = builder.Build();
 
@@ -75,7 +81,6 @@ namespace OroUostoSystem.Server
                     .AllowCredentials()
                     .WithOrigins("https://localhost:52332"));
 
-
             app.Use(async (context, next) =>
             {
                 Console.WriteLine($"=== REQUEST DEBUG ===");
@@ -105,6 +110,15 @@ namespace OroUostoSystem.Server
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
+
+            // COMMENT OUT this code - BackgroundService will start automatically
+            // var reminderService = app.Services.GetRequiredService<IReminderService>();
+            // _ = Task.Run(async () => 
+            // {
+            //     await Task.Delay(2000); // Wait 2 seconds for app to start
+            //     Console.WriteLine("🚀 Starting initial reminder check...");
+            //     await reminderService.CheckAndSendRemindersAsync();
+            // });
 
             app.Run();
         }
