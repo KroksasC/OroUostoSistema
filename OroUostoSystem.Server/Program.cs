@@ -16,6 +16,7 @@ namespace OroUostoSystem.Server
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddAutoMapper(typeof(Program));
             builder.Services.AddSwaggerGen(c =>
             {
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -60,7 +61,7 @@ namespace OroUostoSystem.Server
                 try
                 {
                     var dbInitializer = services.GetRequiredService<OroUostoSystem.Server.DbInitializer.IDbinitializer>();
-                    dbInitializer.Initialize();
+                    dbInitializer.Initialize().GetAwaiter().GetResult();
                 }
                 catch (Exception ex)
                 {
