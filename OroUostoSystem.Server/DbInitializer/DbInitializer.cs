@@ -75,31 +75,41 @@ namespace OroUostoSystem.Server.DbInitializer
             // ==========================================
             if (!_context.Flights.Any())
             {
-                var flight1 = new Flight
+                var flights = new List<Flight>
                 {
-                    AssignedPilot = true,
-                    AssignedMainPilot = false,
-                    WorkingHours = 3.5f,
-                    FlightDate = DateTime.Now.AddDays(-1),
-                    Aircraft = "Airbus A320",
-                    FlightNumber = "FL1001",
-                    Status = "Arrived"
+                    new(){
+                        AssignedPilot = true,
+                        AssignedMainPilot = false,
+                        WorkingHours = 3.5f,
+                        FlightDate = DateTime.Now.AddDays(-1),
+                        Aircraft = "Airbus A320",
+                        FlightNumber = "FL1001",
+                        Status = "Arrived"
+                    },
+                    new(){
+                        AssignedPilot = true,
+                        AssignedMainPilot = true,
+                        WorkingHours = 2.2f,
+                        FlightDate = DateTime.Now,
+                        Aircraft = "Boeing 737",
+                        FlightNumber = "FL2002",
+                        Status = "Boarding"
+                    },
+                    new(){
+                        AssignedPilot = false,
+                        AssignedMainPilot = false,
+                        WorkingHours = 4.1f,
+                        FlightDate = DateTime.Now.AddDays(1),
+                        Aircraft = "Embraer 190",
+                        FlightNumber = "FL3003",
+                        Status = "Scheduled"
+                    }
                 };
 
-                var flight2 = new Flight
-                {
-                    AssignedPilot = true,
-                    AssignedMainPilot = true,
-                    WorkingHours = 2.2f,
-                    FlightDate = DateTime.Now,
-                    Aircraft = "Boeing 737",
-                    FlightNumber = "FL2002",
-                    Status = "Boarding"
-                };
-
-                _context.Flights.AddRange(flight1, flight2);
+                _context.Flights.AddRange(flights);
                 await _context.SaveChangesAsync();
             }
+
 
             // ==========================================
             //  SEED BAGGAGE
@@ -107,64 +117,100 @@ namespace OroUostoSystem.Server.DbInitializer
             if (!_context.Baggages.Any())
             {
                 var client = _context.Clients.First();
-                var flights = _context.Flights.Take(2).ToList();
+                var flights = _context.Flights.ToList();
 
-                var baggage1 = new Baggage
+                var baggageList = new List<Baggage>
                 {
-                    Weight = 23.5,
-                    RegistrationDate = DateTime.Now.AddHours(-5),
-                    Comment = "Blue suitcase with stickers",
-                    Size = "Medium",
-                    ClientId = client.Id,
-                    FlightId = flights[0].Id
+                    new(){
+                        Weight = 23.5,
+                        RegistrationDate = DateTime.Now.AddHours(-5),
+                        Comment = "Blue suitcase with stickers",
+                        Size = "Medium",
+                        ClientId = client.Id,
+                        FlightId = flights[0].Id
+                    },
+                    new(){
+                        Weight = 18.2,
+                        RegistrationDate = DateTime.Now.AddHours(-2),
+                        Comment = "Red backpack",
+                        Size = "Small",
+                        ClientId = client.Id,
+                        FlightId = flights[1].Id
+                    },
+                    new(){
+                        Weight = 30.0,
+                        RegistrationDate = DateTime.Now.AddHours(-3),
+                        Comment = "Large black luggage",
+                        Size = "Large",
+                        ClientId = client.Id,
+                        FlightId = flights[2].Id
+                    }
                 };
 
-                var baggage2 = new Baggage
+                // ==========================================
+                //  ADD 10 EXTRA RANDOM BAGGAGE RECORDS
+                // ==========================================
+                var random = new Random();
+                string[] comments =
                 {
-                    Weight = 18.2,
-                    RegistrationDate = DateTime.Now.AddHours(-2),
-                    Comment = "Red backpack",
-                    Size = "Small",
-                    ClientId = client.Id,
-                    FlightId = flights[1].Id
+                    "Grey Samsonite suitcase",
+                    "Hard-shell case with airport stickers",
+                    "Small kids backpack with cartoon print",
+                    "Black duffel bag",
+                    "Sport bag with equipment",
+                    "Red suitcase with wheels",
+                    "Damaged black bag (handle taped)",
+                    "Bright neon green travel bag",
+                    "Yellow purse with metal locks",
+                    "Checked-in cardboard box"
                 };
 
-                _context.Baggages.AddRange(baggage1, baggage2);
+                string[] sizes = { "Small", "Medium", "Large" };
+
+                for (int i = 0; i < 10; i++)
+                {
+                    baggageList.Add(new Baggage
+                    {
+                        Weight = Math.Round(random.NextDouble() * 25 + 5, 1), // 5–30kg
+                        RegistrationDate = DateTime.Now.AddHours(-random.Next(1, 12)),
+                        Comment = comments[i],
+                        Size = sizes[random.Next(sizes.Length)],
+                        ClientId = client.Id,
+                        FlightId = flights[random.Next(flights.Count)].Id
+                    });
+                }
+
+                _context.Baggages.AddRange(baggageList);
                 await _context.SaveChangesAsync();
             }
 
+
+
             // ==========================================
-            //  SEED BAGGAGE TRACKING
+            //  SEED BAGGAGE TRACKING (1:1)
             // ==========================================
             if (!_context.BaggageTrackings.Any())
             {
                 var baggage = _context.Baggages.ToList();
+                var random = new Random();
 
-                var tracking = new List<BaggageTracking>
+                var tracking = new List<BaggageTracking>();
+
+                foreach (var bag in baggage)
                 {
-                    new(){
-                        BaggageId = baggage[0].Id,
-                        Time = DateTime.Now.AddHours(-4),
-                        Location = "Check-in Zone A",
-                        Status = "Checked-In"
-                    },
-                    new(){
-                        BaggageId = baggage[0].Id,
-                        Time = DateTime.Now.AddHours(-3),
-                        Location = "Sorting Facility",
-                        Status = "In Transit"
-                    },
-                    new(){
-                        BaggageId = baggage[1].Id,
-                        Time = DateTime.Now.AddHours(-1),
-                        Location = "Gate 12",
-                        Status = "Loaded onto Aircraft"
-                    }
-                };
+                    tracking.Add(new BaggageTracking
+                    {
+                        BaggageId = bag.Id,
+                        UpdatedAt = DateTime.Now.AddMinutes(-random.Next(10, 600)),
+                        Latitude = 40 + random.NextDouble() * 20,     // approx Europe
+                        Longitude = -5 + random.NextDouble() * 15
+                    });
+                }
 
                 _context.BaggageTrackings.AddRange(tracking);
                 await _context.SaveChangesAsync();
             }
+
         }
 
         // =====================================================
