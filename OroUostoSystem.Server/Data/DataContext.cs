@@ -117,12 +117,12 @@ namespace OroUostoSystem.Server.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // -----------------------------
-            //  BaggageTracking ↔ Baggage (many : 1)
+            //  BaggageTracking ↔ Baggage (1 : 1)
             // -----------------------------
-            builder.Entity<BaggageTracking>()
-                .HasOne(t => t.Baggage)
-                .WithMany(b => b.Tracking)
-                .HasForeignKey(t => t.BaggageId)
+            builder.Entity<Baggage>()
+                .HasOne(b => b.Tracking)
+                .WithOne(t => t.Baggage)
+                .HasForeignKey<BaggageTracking>(t => t.BaggageId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }
