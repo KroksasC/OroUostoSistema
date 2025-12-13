@@ -58,7 +58,7 @@ namespace OroUostoSystem.Server.Controllers
 
             try
             {
-                await _emailService.SendEmailForServiceOrder(
+            await _emailService.SendServiceOrderConfirmationAsync(
                     dto.Email,
                     dto.ServiceName,
                     dto.TotalPrice
