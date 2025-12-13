@@ -17,5 +17,5 @@
     public Flight Flight { get; set; }
 
     // Navigation
-    public ICollection<BaggageTracking> Tracking { get; set; } = new List<BaggageTracking>();
+    public BaggageTracking? Tracking { get; set; }
 }

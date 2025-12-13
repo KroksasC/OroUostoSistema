@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -20,11 +20,10 @@ export default function LoginWindow() {
       localStorage.setItem("token", token);
       localStorage.setItem("username", username);
       localStorage.setItem("userId", userId)
+      localStorage.setItem("email", email);
       localStorage.setItem("role", JSON.stringify(role));
 
-      if (role.includes("Admin")) {
-        navigate("/");
-      } 
+      navigate("/");
 
     } catch (e) {
       alert("Invalid email or password");

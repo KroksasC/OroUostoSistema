@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+
 import ServiceCard from '../components/ServiceCard'
 import CreateServiceModal from '../components/CreateServiceModal'
 import DeleteServiceModal from '../components/DeleteServiceModal'
@@ -8,36 +10,48 @@ import ServiceDetailModal from '../components/ServiceDetailModal'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 export default function ServicesList() {
-  const [services, setServices] = useState([
-    { id: 1, name: 'Luggage Storage', category: 'Convenience', description: 'Store your luggage securely for the day.', price: 10 },
-    { id: 2, name: 'Fast Track', category: 'Priority', description: 'Skip the waiting lines at security and save time.', price: 25 },
-    { id: 3, name: 'VIP Lounge', category: 'Comfort', description: 'Relax and enjoy free snacks, drinks, and WiFi.', price: 40 },
-  ])
-
+  const [services, setServices] = useState([])
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-
-
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [selectedService, setSelectedService] = useState(null)
-
-
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
-  const [selectedViewService, setSelectedViewService] = useState(null)
-
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [selectedEditService, setSelectedEditService] = useState(null)
-
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
+
+  const [selectedService, setSelectedService] = useState(null)
+  const [selectedEditService, setSelectedEditService] = useState(null)
+  const [selectedViewService, setSelectedViewService] = useState(null)
   const [selectedOrderService, setSelectedOrderService] = useState(null)
 
-  const handleOrderClick = (service) => {
-    setSelectedOrderService(service)
-    setIsOrderModalOpen(true)
+  useEffect(() => {
+    loadServices()
+  }, [])
+
+  const loadServices = async () => {
+    try {
+      const response = await axios.get("/api/service")
+      setServices(response.data)
+    } catch (error) {
+      console.error("Failed to load services:", error)
+    }
   }
 
-  const handlePlaceOrder = (order) => {
-    console.log('Order placed:', order)
+  const handleCreateService = (newService) => {
+    setServices(prev => [...prev, newService])
+  }
+
+  const handleDeleteClick = (service) => {
+    setSelectedService(service)
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleDeleteService = (id) => {
+    setServices(services.filter(s => s.id !== id))
+  }
+
+  const handleViewDetailsClick = (service) => {
+    setSelectedViewService(service)
+    setIsViewModalOpen(true)
   }
 
   const handleEditClick = (service) => {
@@ -45,29 +59,19 @@ export default function ServicesList() {
     setIsEditModalOpen(true)
   }
 
-  const handleCreateService = (newService) => {
-    setServices([...services, newService])
-  }
-
-
-  const handleDeleteClick = (service) => {
-    setSelectedService(service)
-    setIsDeleteModalOpen(true)
-  }
-
-  
-  const handleDeleteService = (id) => {
-    setServices(services.filter(s => s.id !== id))
-  }
-
-
-  const handleViewDetailsClick = (service) => {
-    setSelectedViewService(service)
-    setIsViewModalOpen(true)
-  }
-
   const handleEditService = (updatedService) => {
-    setServices(services.map(s => s.id === updatedService.id ? updatedService : s))
+    setServices(
+      services.map(s => s.id === updatedService.id ? updatedService : s)
+    )
+  }
+
+  const handleOrderClick = (service) => {
+    setSelectedOrderService(service)
+    setIsOrderModalOpen(true)
+  }
+
+  const handlePlaceOrder = (order) => {
+    console.log("Order placed:", order)
   }
 
   return (
@@ -75,11 +79,15 @@ export default function ServicesList() {
       {/* Header + Create button */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="text-center flex-grow-1">Service List</h2>
-        <button className="btn btn-success ms-3" onClick={() => setIsCreateModalOpen(true)}>
+        <button
+          className="btn btn-success ms-3"
+          onClick={() => setIsCreateModalOpen(true)}
+        >
           + Create
         </button>
       </div>
 
+      {/* Services grid */}
       <div className="row">
         {services.map(service => (
           <div key={service.id} className="col-md-6 mb-4">
@@ -94,6 +102,7 @@ export default function ServicesList() {
         ))}
       </div>
 
+      {/* Modals */}
       <CreateServiceModal
         show={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -126,7 +135,6 @@ export default function ServicesList() {
         onClose={() => setIsOrderModalOpen(false)}
         onOrder={handlePlaceOrder}
       />
-
     </div>
   )
 }

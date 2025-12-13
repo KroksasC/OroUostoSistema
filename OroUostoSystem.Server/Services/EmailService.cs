@@ -19,6 +19,7 @@ namespace OroUostoSystem.Server.Services
             _configuration = configuration;
         }
         
+        // Keep the flight reminder functionality
         public async Task<bool> SendFlightReminderAsync(
             string toEmail, 
             string pilotName, 
@@ -27,71 +28,124 @@ namespace OroUostoSystem.Server.Services
             DateTime flightDate, 
             string destination)
         {
-             try
-    {
-        // 1. READ CONFIGURATION from appsettings.json
-        var smtpHost = _configuration["SmtpSettings:Host"];            // e.g., "smtp.gmail.com"
-        var smtpPort = _configuration.GetValue<int>("SmtpSettings:Port"); // e.g., 587
-        var username = _configuration["SmtpSettings:Username"];        // Your email
-        var password = _configuration["SmtpSettings:Password"];        // App password
-        var fromEmail = _configuration["SmtpSettings:FromEmail"];      // Displayed as sender
-        var enableSsl = _configuration.GetValue<bool>("SmtpSettings:EnableSsl", true);
-        
-        // 2. CHECK IF CONFIGURED
-        // If Host or Username is empty → TEST MODE (log only)
-        if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(username))
-        {
-            _logger.LogInformation($"📧 [TEST MODE] Would send to: {toEmail}");
-            _logger.LogInformation($"   Subject: ✈️ Flight Reminder: {flightNumber}");
-            _logger.LogInformation($"   Body: Dear {pilotName}, your flight {flightNumber} is in 24h");
-            await Task.Delay(1);
-            return true; // Return true for testing
+            try
+            {
+                // Get configuration - could unify to use either section
+            var smtpHost = _configuration["SmtpSettings:FlightReminders:Host"] 
+                         ?? _configuration["SmtpSettings:Host"]; // Fallback
+            var smtpPort = _configuration.GetValue<int>("SmtpSettings:FlightReminders:Port", 2525);
+            var username = _configuration["SmtpSettings:FlightReminders:Username"] 
+                         ?? _configuration["SmtpSettings:Username"];
+            var password = _configuration["SmtpSettings:FlightReminders:Password"] 
+                         ?? _configuration["SmtpSettings:Password"];
+            var fromEmail = _configuration["SmtpSettings:FlightReminders:FromEmail"] 
+                          ?? _configuration["SmtpSettings:FromEmail"] 
+                          ?? username;
+            var enableSsl = _configuration.GetValue<bool>("SmtpSettings:FlightReminders:EnableSsl", false);
+                
+                // If Host or Username is empty → TEST MODE (log only)
+                if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(username))
+                {
+                    _logger.LogInformation($"📧 [TEST MODE] Would send flight reminder to: {toEmail}");
+                    _logger.LogInformation($"   Subject: ✈️ Flight Reminder: {flightNumber}");
+                    await Task.Delay(1);
+                    return true;
+                }
+                
+                _logger.LogInformation($"📤 Sending flight reminder to: {toEmail}");
+                
+                using var client = CreateSmtpClient(smtpHost, smtpPort, username, password, enableSsl);
+                
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(fromEmail, "Oro Uosto System"),
+                    Subject = $"✈️ Flight Reminder: {flightNumber}",
+                    Body = CreateFlightReminderBody(pilotName, flightNumber, aircraft, flightDate, destination),
+                    IsBodyHtml = true
+                };
+                
+                mailMessage.To.Add(toEmail);
+                await client.SendMailAsync(mailMessage);
+                
+                _logger.LogInformation($"✅ Flight reminder sent successfully to {toEmail}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ Failed to send flight reminder to {toEmail}");
+                return false;
+            }
         }
         
-        // 3. LOG REAL SENDING ATTEMPT
-        _logger.LogInformation($"📤 Sending REAL email to: {toEmail}");
-        _logger.LogInformation($"   Using SMTP: {smtpHost}:{smtpPort}");
-        
-        // 4. CREATE SMTP CLIENT (like setting up mail truck)
-        using var client = new SmtpClient(smtpHost, smtpPort)
+        // Add the service order functionality from master branch
+        public async Task<bool> SendServiceOrderConfirmationAsync(
+            string emailToSend, 
+            string serviceName, 
+            double price)
         {
-            Credentials = new NetworkCredential(username, password), // Login to email server
-            EnableSsl = enableSsl,     // Encrypt connection (true for Gmail)
-            DeliveryMethod = SmtpDeliveryMethod.Network, // Send over internet
-            Timeout = 10000            // Wait max 10 seconds
-        };
+            try
+            {
+                // Get configuration - could unify to use either section
+            var smtpHost = _configuration["SmtpSettings:ServiceOrders:Host"] 
+                         ?? _configuration["SmtpSettings:Host"]; // Fallback
+            var smtpPort = _configuration.GetValue<int>("SmtpSettings:ServiceOrders:Port", 587);
+            var username = _configuration["SmtpSettings:ServiceOrders:Username"] 
+                         ?? _configuration["EmailSettings:Email"]; // Fallback to old config
+            var password = _configuration["SmtpSettings:ServiceOrders:Password"] 
+                         ?? _configuration["EmailSettings:Password"];
+            var fromEmail = _configuration["SmtpSettings:ServiceOrders:FromEmail"] 
+                          ?? _configuration["SmtpSettings:FromEmail"] 
+                          ?? username;
+            var enableSsl = _configuration.GetValue<bool>("SmtpSettings:ServiceOrders:EnableSsl", true);
         
-        // 5. CREATE EMAIL MESSAGE (like writing a letter)
-        var mailMessage = new MailMessage
-        {
-            From = new MailAddress(fromEmail, "Oro Uosto System"), // Sender address
-            Subject = $"✈️ Flight Reminder: {flightNumber}",       // Email subject
-            Body = CreateEmailBody(pilotName, flightNumber, aircraft, flightDate, destination),
-            IsBodyHtml = true  // Send as HTML (with formatting)
-        };
-        
-        // 6. ADD RECIPIENT (address the envelope)
-        mailMessage.To.Add(toEmail);
-        
-        // Optional: Add CC (carbon copy)
-        // mailMessage.CC.Add("admin@airline.com");
-        
-        // 7. SEND EMAIL (put letter in mailbox)
-        await client.SendMailAsync(mailMessage);
-        
-        // 8. LOG SUCCESS
-        _logger.LogInformation($"✅ Email sent successfully to {toEmail}");
-        return true;
-    }
-    catch (Exception ex)
-    {
-        // 9. HANDLE ERRORS
-        _logger.LogError(ex, $"❌ Failed to send email to {toEmail}");
-        return false;
-    }
+                
+                // If Host or Username is empty → TEST MODE (log only)
+                if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(username))
+                {
+                    _logger.LogInformation($"📧 [TEST MODE] Would send service confirmation to: {emailToSend}");
+                    _logger.LogInformation($"   Service: {serviceName}, Price: {price}€");
+                    await Task.Delay(1);
+                    return true;
+                }
+                
+                _logger.LogInformation($"📤 Sending service confirmation to: {emailToSend}");
+                
+                using var client = CreateSmtpClient(smtpHost, smtpPort, username, password, enableSsl);
+                
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(fromEmail, "Oro Uosto System"),
+                    Subject = "Your Service Order Confirmation",
+                    Body = CreateServiceOrderBody(serviceName, price),
+                    IsBodyHtml = false // Plain text as in master branch
+                };
+                
+                mailMessage.To.Add(emailToSend);
+                await client.SendMailAsync(mailMessage);
+                
+                _logger.LogInformation($"✅ Service confirmation sent successfully to {emailToSend}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ Failed to send service confirmation to {emailToSend}");
+                return false;
+            }
         }
         
-        private string CreateEmailBody(string pilotName, string flightNumber, string aircraft, 
+        // Helper method to create SMTP client
+        private SmtpClient CreateSmtpClient(string host, int port, string username, string password, bool enableSsl)
+        {
+            return new SmtpClient(host, port)
+            {
+                Credentials = new NetworkCredential(username, password),
+                EnableSsl = enableSsl,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                Timeout = 10000
+            };
+        }
+        
+        private string CreateFlightReminderBody(string pilotName, string flightNumber, string aircraft, 
             DateTime flightDate, string destination)
         {
             return $@"
@@ -142,6 +196,18 @@ namespace OroUostoSystem.Server.Services
                     </div>
                 </body>
                 </html>";
+        }
+        
+        private string CreateServiceOrderBody(string serviceName, double price)
+        {
+            return $@"
+Thank you for ordering the service '{serviceName}'.
+
+Total price: {price} €
+Your order has been successfully registered.
+
+Best regards,
+Airport Service Team";
         }
     }
 }

@@ -5,6 +5,7 @@ using OroUostoSystem.Server.Data;
 using OroUostoSystem.Server.Models.DTO;
 using OroUostoSystem.Server.Models;
 using OroUostoSystem.Server.Models.DTO;
+using System.Text.Json;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -102,62 +103,21 @@ public class BaggageController : ControllerBase
         return NoContent();
     }
 
-    // ===================================================
-    // 6. GET BAGGAGE TRACKING HISTORY
-    // ===================================================
-    // Used in Location modal (history list)
-    [HttpGet("{id}/tracking")]
-    public async Task<ActionResult<List<BaggageTrackingDto>>> GetTracking(int id)
-    {
-        var track = await _context.BaggageTrackings
-            .Where(t => t.BaggageId == id)
-            .OrderBy(t => t.Time)
-            .ToListAsync();
-
-        return Ok(_mapper.Map<List<BaggageTrackingDto>>(track));
-    }
 
     // ===================================================
-    // 7. ADD TRACKING ENTRY
-    // ===================================================
-    [HttpPost("{id}/tracking")]
-    public async Task<IActionResult> AddTracking(int id, BaggageTrackingCreateDto dto)
-    {
-        var baggage = await _context.Baggages.FindAsync(id);
-        if (baggage == null)
-            return NotFound();
-
-        var tracking = new BaggageTracking
-        {
-            BaggageId = id,
-            Time = DateTime.Now,
-            Location = dto.Location,
-            Status = dto.Status
-        };
-
-        _context.BaggageTrackings.Add(tracking);
-        await _context.SaveChangesAsync();
-
-        return Ok(_mapper.Map<BaggageTrackingDto>(tracking));
-    }
-
-    // ===================================================
-    // 8. GET LIVE REAL-TIME LOCATION (external system)
+    // 6. GET LIVE REAL-TIME LOCATION (external system)
     // ===================================================
     // Used in Location modal's map component
     [HttpGet("{id}/location")]
     public async Task<ActionResult<BaggageLiveLocationDto>> GetLiveLocation(int id)
     {
-        // 1. verify baggage exists
         var baggage = await _context.Baggages.FindAsync(id);
         if (baggage == null)
             return NotFound("Baggage not found.");
 
-        // 2. external API call
-        var url = "https://opensky-network.org/api/states/all";
+        const string url = "https://opensky-network.org/api/states/all";
 
         OpenSkyResponseDto? data;
-
         try
         {
             data = await _http.GetFromJsonAsync<OpenSkyResponseDto>(url);
@@ -170,30 +130,32 @@ public class BaggageController : ControllerBase
         if (data?.States == null || data.States.Count == 0)
             return StatusCode(502, "External tracking system returned no usable data.");
 
-        // 3. pick an aircraft index based on baggage id
-        int aircraftIndex = id % data.States.Count;
+        int index = id % data.States.Count;
+        var aircraft = data.States[index];
 
-        var aircraft = data.States[aircraftIndex];
+        // 5 = longitude, 6 = latitude
+        JsonElement lonElement = (JsonElement)aircraft[5];
+        JsonElement latElement = (JsonElement)aircraft[6];
 
-        // OpenSky structure:
-        // index 5 = longitude
-        // index 6 = latitude
-        double? lon = aircraft[5] as double?;
-        double? lat = aircraft[6] as double?;
+        if (lonElement.ValueKind != JsonValueKind.Number ||
+            latElement.ValueKind != JsonValueKind.Number)
+        {
+            return StatusCode(500, "External API returned invalid coordinate format.");
+        }
 
-        if (lat == null || lon == null)
-            return StatusCode(500, "External API returned invalid coordinate data.");
+        double longitude = lonElement.GetDouble();
+        double latitude = latElement.GetDouble();
 
-        // 4. map to our DTO
         var liveDto = new BaggageLiveLocationDto
         {
-            Latitude = lat.Value,
-            Longitude = lon.Value,
-            Status = "Tracked via OpenSky realtime feed",
+            Latitude = latitude,
+            Longitude = longitude,
             UpdatedAt = DateTime.UtcNow
         };
 
         return Ok(liveDto);
     }
+
+
 
 }
