@@ -49,10 +49,8 @@ namespace OroUostoSystem.Server
             // ADD JUST THIS ONE LINE - BackgroundReminderService
             builder.Services.AddHostedService<BackgroundReminderService>();
 
-            builder.Services.AddScoped<EmailService>();
-            // COMMENT OUT these lines for now (they're causing errors):
-            // builder.Services.AddScoped<IEmailService, EmailService>();
-            // builder.Services.AddScoped<IReminderService, ReminderService>();
+            builder.Services.AddSingleton<EmailService>();
+
 
             var app = builder.Build();
 
