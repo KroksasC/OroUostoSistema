@@ -7,7 +7,6 @@ export default function FlightEditModal({ isOpen, onClose, flight, onSave }) {
   
   if (!isOpen || !flight) return null;
 
-  // Update local state when flight prop changes
   useEffect(() => {
     setEditableFlight(flight || {});
   }, [flight]);
@@ -28,12 +27,14 @@ export default function FlightEditModal({ isOpen, onClose, flight, onSave }) {
       onClose();
     } catch (error) {
       console.error('Failed to save flight:', error);
+      alert('Failed to save changes. Please try again.');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleCancel = () => {
+    setEditableFlight(flight);
     onClose();
   };
 
@@ -41,8 +42,8 @@ export default function FlightEditModal({ isOpen, onClose, flight, onSave }) {
     <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
       <div className="modal-dialog">
         <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">Edit Flight #{flight.id}</h5>
+          <div className="modal-header bg-warning">
+            <h5 className="modal-title">Edit Flight - {flight.flightId}</h5>
             <button 
               type="button" 
               className="btn-close" 
@@ -52,66 +53,87 @@ export default function FlightEditModal({ isOpen, onClose, flight, onSave }) {
             ></button>
           </div>
           <div className="modal-body">
-            {/* Read-only fields */}
-            <div className="mb-3">
-              <label className="form-label"><strong>Flight ID:</strong></label>
-              <input 
-                type="text" 
-                className="form-control" 
-                value={flight.id} 
-                disabled 
-              />
-            </div>
-            
-            <div className="mb-3">
-              <label className="form-label"><strong>Destination:</strong></label>
-              <input 
-                type="text" 
-                className="form-control" 
-                value={flight.destination} 
-                disabled 
-              />
-            </div>
-            
-            {/* Editable fields */}
-            <div className="mb-3">
-              <label className="form-label"><strong>Plane Name:</strong></label>
-              <input
-                type="text"
-                className="form-control"
-                value={editableFlight.planeName || ''}
-                onChange={(e) => handleInputChange('planeName', e.target.value)}
-                placeholder="Enter plane name"
-                disabled={isSaving}
-              />
-            </div>
-            
-            <div className="mb-3">
-              <label className="form-label"><strong>Runway:</strong></label>
-              <input
-                type="text"
-                className="form-control"
-                value={editableFlight.runAway || ''}
-                onChange={(e) => handleInputChange('runAway', e.target.value)}
-                placeholder="Enter runway number"
-                disabled={isSaving}
-              />
-            </div>
-            
-            <div className="mb-3">
-              <label className="form-label"><strong>Takeoff Time:</strong></label>
-              <input
-                type="datetime-local"
-                className="form-control"
-                value={editableFlight.takeOffTime ? 
-                  editableFlight.takeOffTime.slice(0, 16) : ''}
-                onChange={(e) => handleInputChange('takeOffTime', e.target.value)}
-                disabled={isSaving}
-              />
-              <div className="form-text">
-                Current: {new Date(flight.takeOffTime).toLocaleString()}
+            {/* Read-only Information */}
+            <div className="mb-4">
+              <h6 className="text-muted mb-3">Flight Information (Read-Only)</h6>
+              
+              <div className="mb-3">
+                <label className="form-label fw-bold">Flight Number:</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={flight.flightId} 
+                  disabled 
+                />
+              </div>
+              
+              <div className="mb-3">
+                <label className="form-label fw-bold">Destination:</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={flight.destination} 
+                  disabled 
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label fw-bold">Takeoff Time:</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={new Date(flight.takeOffTime).toLocaleString()} 
+                  disabled 
+                />
               </div>
             </div>
+
+            <hr />
+
+            {/* Editable Fields */}
+            <div className="mb-4">
+              <h6 className="text-success mb-3">Editable Fields</h6>
+              
+              <div className="mb-3">
+                <label className="form-label fw-bold">
+                  Starting Airport (Runway): <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={editableFlight.startingAirport || ''}
+                  onChange={(e) => handleInputChange('startingAirport', e.target.value)}
+                  placeholder="e.g., 09, 27, 33"
+                  disabled={isSaving}
+                />
+                <div className="form-text">
+                  Enter the runway number for takeoff (numeric value)
+                </div>
+              </div>
+              
+              <div className="mb-3">
+                <label className="form-label fw-bold">
+                  Aircraft: <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={editableFlight.planeName || ''}
+                  onChange={(e) => handleInputChange('planeName', e.target.value)}
+                  placeholder="e.g., Boeing 737, Airbus A320"
+                  disabled={isSaving}
+                />
+                <div className="form-text">
+                  Specify the aircraft model
+                </div>
+              </div>
+            </div>
+
+            {flight.isSoon && (
+              <div className="alert alert-warning">
+                <strong>⚠️ Warning:</strong> This flight is departing soon. Please ensure all changes are correct.
+              </div>
+            )}
           </div>
           <div className="modal-footer">
             <button 
@@ -126,7 +148,14 @@ export default function FlightEditModal({ isOpen, onClose, flight, onSave }) {
               onClick={handleSave}
               disabled={isSaving}
             >
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </button>
           </div>
         </div>
