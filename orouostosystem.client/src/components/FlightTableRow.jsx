@@ -1,4 +1,5 @@
-export default function FlightTableRow({ 
+// Update to handle real API data structure
+const FlightTableRow = ({ 
   flight, 
   isRecommended = false, 
   isSoon = false,
@@ -7,23 +8,36 @@ export default function FlightTableRow({
   onDelete,
   onAccept,
   onDecline
-}) {
-  // Format date for display
-  const formattedDate = new Date(flight.takeOffTime).toLocaleDateString("en-US", {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+}) => {
+  // Format date from API (might already be string or Date object)
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        weekday: "short",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return "Invalid Date";
+    }
+  };
 
-  // Format time for display
-  const formattedTime = new Date(flight.takeOffTime).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  // Format time
+  const formatTime = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+    } catch {
+      return "Invalid Time";
+    }
+  };
 
-  // Determine row styling based on isSoon
   const rowStyle = {
     fontWeight: isSoon ? "bold" : "normal",
     backgroundColor: isSoon ? "rgba(255, 0, 0, 0.1)" : "transparent"
@@ -31,11 +45,11 @@ export default function FlightTableRow({
 
   return (
     <tr style={rowStyle}>
-      <td>{flight.destination}</td>
-      <td>{formattedDate}</td>
-      <td>{formattedTime}</td>
+      <td>{flight.destination || "Unknown"}</td>
+      <td>{formatDate(flight.takeOffTime)}</td>
+      <td>{formatTime(flight.takeOffTime)}</td>
+      <td>{flight.status || "Scheduled"}</td>
       <td>
-        {/* Details button - always shown */}
         <button
           className="btn btn-primary btn-sm me-2"
           onClick={() => onViewDetails(flight)}
@@ -44,9 +58,7 @@ export default function FlightTableRow({
           Details
         </button>
         
-        {/* Conditional buttons based on flight type */}
         {isRecommended ? (
-          // Recommended flights: Accept & Decline
           <>
             <button
               className="btn btn-success btn-sm me-2"
@@ -64,7 +76,6 @@ export default function FlightTableRow({
             </button>
           </>
         ) : (
-          // Regular flights: Edit & Delete
           <>
             <button
               className="btn btn-warning btn-sm me-2"
@@ -85,4 +96,6 @@ export default function FlightTableRow({
       </td>
     </tr>
   );
-}
+};
+
+export { FlightTableRow };

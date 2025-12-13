@@ -1,6 +1,7 @@
 using Microsoft.OpenApi.Models;
 using OroUostoSystem.Server.Extensions;
 using OroUostoSystem.Server.Utility; // Add this for BackgroundReminderService
+using OroUostoSystem.Server.Services;
 
 namespace OroUostoSystem.Server
 {
@@ -14,6 +15,8 @@ namespace OroUostoSystem.Server
             // Add services to the container.
             builder.Services.AddApplicationServices(builder.Configuration);
 
+            builder.Services.AddTransient<EmailService>();
+            builder.Services.AddHostedService<BackgroundReminderService>();
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddAutoMapper(typeof(Program));
