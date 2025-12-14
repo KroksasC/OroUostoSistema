@@ -4,13 +4,16 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 
 export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
   const [formData, setFormData] = useState(route)
+  const [originalData, setOriginalData] = useState(route)
   const [showForecast, setShowForecast] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [role, setRole] = useState([])
+  const [hasChanges, setHasChanges] = useState(false)
 
   useEffect(() => { 
     setFormData(route)
+    setOriginalData(route)
+    setHasChanges(false)
     const storedRole = JSON.parse(localStorage.getItem("role")) ?? []
     setRole(storedRole)
   }, [route])
@@ -19,10 +22,22 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
 
   const hasRole = (r) => role.includes(r)
   const isWorker = hasRole("Worker")
+  const canEdit = isWorker
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    setFormData(prev => {
+      const updated = { ...prev, [name]: value }
+      // Check if there are changes
+      setHasChanges(
+        updated.takeoffAirport !== originalData.takeoffAirport ||
+        updated.landingAirport !== originalData.landingAirport ||
+        parseFloat(updated.distance) !== parseFloat(originalData.distance) ||
+        parseFloat(updated.duration) !== parseFloat(originalData.duration) ||
+        parseFloat(updated.altitude) !== parseFloat(originalData.altitude)
+      )
+      return updated
+    })
   }
 
   const formatDuration = (hours) => {
@@ -31,27 +46,19 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
     return `${h}h ${m}m`
   }
 
-  const parseDuration = (durationStr) => {
-    // Convert "7h 5m" format back to hours (decimal)
-    const match = durationStr.match(/(\d+)h\s*(\d+)m/)
-    if (match) {
-      const hours = parseInt(match[1])
-      const minutes = parseInt(match[2])
-      return hours + (minutes / 60)
-    }
-    return parseFloat(durationStr) || 0
-  }
-
   const handleSave = async () => {
+    if (!hasChanges) {
+      onClose()
+      return
+    }
+
     setSaving(true)
     try {
       const updateData = {
-        takeoffAirport: formData.takeoffAirport,
-        landingAirport: formData.landingAirport,
+        takeoffAirport: formData.takeoffAirport.trim().toUpperCase(),
+        landingAirport: formData.landingAirport.trim().toUpperCase(),
         distance: parseFloat(formData.distance),
-        duration: typeof formData.duration === 'string' && formData.duration.includes('h') 
-          ? parseDuration(formData.duration) 
-          : parseFloat(formData.duration),
+        duration: parseFloat(formData.duration),
         altitude: parseFloat(formData.altitude)
       }
 
@@ -63,7 +70,6 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
 
       if (res.ok) {
         alert('Route updated successfully')
-        setIsEditing(false)
         if (onSave) onSave()
         onClose()
       } else {
@@ -78,8 +84,10 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
   }
 
   const handleCancel = () => {
-    setFormData(route)
-    setIsEditing(false)
+    if (hasChanges && !window.confirm('You have unsaved changes. Are you sure you want to close?')) {
+      return
+    }
+    onClose()
   }
 
   return (
@@ -88,10 +96,10 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">Route Details</h5>
-            <button type="button" className="btn-close" onClick={onClose}></button>
+            <button type="button" className="btn-close" onClick={handleCancel}></button>
           </div>
           <div className="modal-body">
-            <form>
+            <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
               <div className="mb-3">
                 <label className="form-label">Source Airfield Code</label>
                 <input 
@@ -99,7 +107,7 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
                   value={formData.takeoffAirport} 
                   onChange={handleChange} 
                   className="form-control" 
-                  readOnly={!isEditing}
+                  readOnly={!canEdit}
                 />
               </div>
               <div className="mb-3">
@@ -109,7 +117,7 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
                   value={formData.landingAirport} 
                   onChange={handleChange} 
                   className="form-control" 
-                  readOnly={!isEditing}
+                  readOnly={!canEdit}
                 />
               </div>
               <div className="mb-3">
@@ -120,7 +128,8 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
                   value={formData.distance} 
                   onChange={handleChange} 
                   className="form-control" 
-                  readOnly={!isEditing}
+                  readOnly={!canEdit}
+                  step="0.01"
                 />
               </div>
               <div className="mb-3">
@@ -129,25 +138,29 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
                   type="number"
                   step="0.01"
                   name="duration" 
-                  value={isEditing ? formData.duration : formatDuration(formData.duration)} 
+                  value={formData.duration} 
                   onChange={handleChange} 
                   className="form-control" 
-                  readOnly={!isEditing}
-                  placeholder={isEditing ? "e.g., 7.08 (for 7h 5m)" : ""}
+                  readOnly={!canEdit}
+                  placeholder={canEdit ? "e.g., 7.08 (for 7h 5m)" : ""}
                 />
-                {isEditing && (
-                  <small className="text-muted">Enter duration in hours (e.g., 7.08 for 7h 5m)</small>
+                {canEdit && (
+                  <small className="text-muted">Enter duration in hours (e.g., 7.08 for 7h 5m). Display: {formatDuration(formData.duration || 0)}</small>
+                )}
+                {!canEdit && (
+                  <small className="text-muted">Duration: {formatDuration(formData.duration || 0)}</small>
                 )}
               </div>
               <div className="mb-3">
-                <label className="form-label">Flight Altitude</label>
+                <label className="form-label">Flight Altitude (km)</label>
                 <input 
                   type="number"
                   name="altitude" 
                   value={formData.altitude} 
                   onChange={handleChange} 
                   className="form-control" 
-                  readOnly={!isEditing}
+                  readOnly={!canEdit}
+                  step="0.1"
                 />
               </div>
               <div className="mb-3">
@@ -171,31 +184,23 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
                   )}
                 </div>
                 <div>
-                  {!isEditing ? (
-                    <>
-                      {isWorker && (
-                        <button type="button" className="btn btn-primary me-2" onClick={() => setIsEditing(true)}>
-                          Edit
-                        </button>
-                      )}
-                      <button type="button" className="btn btn-secondary" onClick={onClose}>
-                        Close
-                      </button>
-                    </>
-                  ) : (
+                  {canEdit ? (
                     <>
                       <button type="button" className="btn btn-secondary me-2" onClick={handleCancel}>
-                        Cancel
+                        {hasChanges ? 'Cancel' : 'Close'}
                       </button>
                       <button 
-                        type="button" 
+                        type="submit" 
                         className="btn btn-success" 
-                        onClick={handleSave}
-                        disabled={saving}
+                        disabled={saving || !hasChanges}
                       >
                         {saving ? 'Saving...' : 'Save'}
                       </button>
                     </>
+                  ) : (
+                    <button type="button" className="btn btn-secondary" onClick={onClose}>
+                      Close
+                    </button>
                   )}
                 </div>
               </div>

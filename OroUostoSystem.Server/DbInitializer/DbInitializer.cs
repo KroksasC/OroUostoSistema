@@ -323,14 +323,14 @@ namespace OroUostoSystem.Server.DbInitializer
                         LandingAirport = "VNO",
                         Distance = 5540,
                         Duration = 7.08, // 7h 5m in hours
-                        Altitude = 35000
+                        Altitude = 10.7 // 10.7 km (approximately 35000 feet)
                     },
                     new(){
                         TakeoffAirport = "KUN",
                         LandingAirport = "PLQ",
                         Distance = 8770,
                         Duration = 11.5, // 11h 30m in hours
-                        Altitude = 36000
+                        Altitude = 11.0 // 11 km (approximately 36000 feet)
                     }
                 };
 

@@ -17,6 +17,8 @@ namespace OroUostoSystem.Server.Mapping
             CreateMap<WeatherForecast, WeatherForecastDto>();
 
             CreateMap<RouteUpdateDto, Route>();
+            
+            CreateMap<RouteCreateDto, Route>();
         }
     }
 }

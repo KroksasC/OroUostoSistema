@@ -52,7 +52,25 @@ namespace OroUostoSystem.Server.Controllers
         }
 
         // ===================================================
-        // 3. UPDATE ROUTE
+        // 3. CREATE ROUTE
+        // ===================================================
+        [HttpPost]
+        public async Task<ActionResult<RouteDto>> Create([FromBody] RouteCreateDto dto)
+        {
+            var route = _mapper.Map<Route>(dto);
+            _context.Routes.Add(route);
+            await _context.SaveChangesAsync();
+
+            var createdRoute = await _context.Routes
+                .Include(r => r.Flights)
+                .Include(r => r.WeatherForecasts)
+                .FirstOrDefaultAsync(r => r.Id == route.Id);
+
+            return CreatedAtAction(nameof(Get), new { id = route.Id }, _mapper.Map<RouteDto>(createdRoute));
+        }
+
+        // ===================================================
+        // 4. UPDATE ROUTE
         // ===================================================
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] RouteUpdateDto dto)
@@ -68,7 +86,7 @@ namespace OroUostoSystem.Server.Controllers
         }
 
         // ===================================================
-        // 4. DELETE ROUTE
+        // 5. DELETE ROUTE
         // ===================================================
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)

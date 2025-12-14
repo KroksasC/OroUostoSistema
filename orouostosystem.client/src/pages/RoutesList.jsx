@@ -88,7 +88,7 @@ export default function RoutesList() {
             <th>Destination</th>
             <th>Distance (km)</th>
             <th>Duration</th>
-            <th>Altitude</th>
+            <th>Altitude (km)</th>
             <th>Actions</th>
           </tr>
         </thead>
