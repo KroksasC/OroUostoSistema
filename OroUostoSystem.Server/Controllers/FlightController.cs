@@ -17,6 +17,21 @@ namespace OroUostoSystem.Server.Controllers
             _logger = logger;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAllFlights()
+        {
+            var flights = await _context.Flights
+                .Select(f => new
+                {
+                    id = f.Id,
+                    flightNumber = f.FlightNumber,
+                    flightDate = f.FlightDate
+                })
+                .ToListAsync();
+
+            return Ok(flights);
+        }
+
         [HttpGet("pilot/profile/{userId}")]
         public async Task<IActionResult> GetPilotProfile(string userId)
         {

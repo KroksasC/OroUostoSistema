@@ -148,6 +148,10 @@ export default function Home() {
           </div>
         </div>
       </div>
+            <SearchLuggageModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }
