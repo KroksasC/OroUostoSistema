@@ -331,6 +331,62 @@ namespace OroUostoSystem.Server.DbInitializer
                         Distance = 8770,
                         Duration = 11.5, // 11h 30m in hours
                         Altitude = 11.0 // 11 km (approximately 36000 feet)
+                    },
+                    new(){
+                        TakeoffAirport = "JFK",
+                        LandingAirport = "LAX",
+                        Distance = 3983,
+                        Duration = 5.5,
+                        Altitude = 11.3
+                    },
+                    new(){
+                        TakeoffAirport = "ORD",
+                        LandingAirport = "MIA",
+                        Distance = 1882,
+                        Duration = 3.2,
+                        Altitude = 10.5
+                    },
+                    new(){
+                        TakeoffAirport = "DFW",
+                        LandingAirport = "SEA",
+                        Distance = 2794,
+                        Duration = 4.1,
+                        Altitude = 10.8
+                    },
+                    new(){
+                        TakeoffAirport = "ATL",
+                        LandingAirport = "DEN",
+                        Distance = 1862,
+                        Duration = 3.5,
+                        Altitude = 10.9
+                    },
+                    new(){
+                        TakeoffAirport = "BOS",
+                        LandingAirport = "SFO",
+                        Distance = 4341,
+                        Duration = 6.2,
+                        Altitude = 11.2
+                    },
+                    new(){
+                        TakeoffAirport = "PHX",
+                        LandingAirport = "MSP",
+                        Distance = 2043,
+                        Duration = 3.3,
+                        Altitude = 10.6
+                    },
+                    new(){
+                        TakeoffAirport = "LAS",
+                        LandingAirport = "MCO",
+                        Distance = 3236,
+                        Duration = 4.8,
+                        Altitude = 10.7
+                    },
+                    new(){
+                        TakeoffAirport = "PDX",
+                        LandingAirport = "IAH",
+                        Distance = 3054,
+                        Duration = 4.5,
+                        Altitude = 11.1
                     }
                 };
 
@@ -345,32 +401,6 @@ namespace OroUostoSystem.Server.DbInitializer
                     flights[1].RouteId = routes[1].Id;
                     await _context.SaveChangesAsync();
                 }
-            }
-
-            // ==========================================
-            //  SEED WEATHER FORECASTS
-            // ==========================================
-            if (!_context.WeatherForecasts.Any())
-            {
-                var routes = _context.Routes.ToList();
-                var random = new Random();
-
-                var forecasts = new List<WeatherForecast>();
-
-                foreach (var route in routes)
-                {
-                    forecasts.Add(new WeatherForecast
-                    {
-                        RouteId = route.Id,
-                        Humidity = 55 + random.NextDouble() * 10,
-                        Temperature = 10 + random.NextDouble() * 10,
-                        CheckTime = DateTime.Now.AddHours(-random.Next(1, 24)),
-                        WindSpeed = 20 + random.NextDouble() * 15
-                    });
-                }
-
-                _context.WeatherForecasts.AddRange(forecasts);
-                await _context.SaveChangesAsync();
             }
 
         }

@@ -9,11 +9,14 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
   const [saving, setSaving] = useState(false)
   const [role, setRole] = useState([])
   const [hasChanges, setHasChanges] = useState(false)
+  const [loadingWeather, setLoadingWeather] = useState(false)
+  const [weatherData, setWeatherData] = useState(null)
 
   useEffect(() => { 
     setFormData(route)
     setOriginalData(route)
     setHasChanges(false)
+    setWeatherData(null)
     const storedRole = JSON.parse(localStorage.getItem("role")) ?? []
     setRole(storedRole)
   }, [route])
@@ -22,6 +25,7 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
 
   const hasRole = (r) => role.includes(r)
   const isWorker = hasRole("Worker")
+  const isPilot = hasRole("Pilot")
   const canEdit = isWorker
 
   const handleChange = (e) => {
@@ -80,6 +84,31 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
       alert('Failed to update route')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleViewForecast = async () => {
+    if (!isPilot) {
+      alert('Only pilots can view weather forecasts')
+      return
+    }
+
+    setLoadingWeather(true)
+    try {
+      const res = await fetch(`/api/routes/${formData.id}/weather`)
+
+      if (res.ok) {
+        const forecast = await res.json()
+        setWeatherData(forecast)
+        setShowForecast(true)
+      } else {
+        alert('Failed to fetch weather forecast')
+      }
+    } catch (error) {
+      console.error('Failed to fetch weather:', error)
+      alert('Failed to fetch weather forecast')
+    } finally {
+      setLoadingWeather(false)
     }
   }
 
@@ -177,9 +206,14 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
               </div>
               <div className="d-flex justify-content-between mt-3">
                 <div>
-                  {formData.latestForecast && (
-                    <button type="button" className="btn btn-info" onClick={() => setShowForecast(true)}>
-                      View Forecast
+                  {isPilot && (
+                    <button 
+                      type="button" 
+                      className="btn btn-info" 
+                      onClick={handleViewForecast}
+                      disabled={loadingWeather}
+                    >
+                      {loadingWeather ? 'Loading...' : 'View Forecast'}
                     </button>
                   )}
                 </div>
@@ -208,8 +242,8 @@ export default function RouteEditModal({ isOpen, onClose, route, onSave }) {
           </div>
         </div>
       </div>
-      {showForecast && formData.latestForecast && (
-        <WeatherForecastModal isOpen={showForecast} forecast={formData.latestForecast} onClose={() => setShowForecast(false)} />
+      {showForecast && weatherData && (
+        <WeatherForecastModal isOpen={showForecast} forecast={weatherData} onClose={() => setShowForecast(false)} />
       )}
     </div>
   )
