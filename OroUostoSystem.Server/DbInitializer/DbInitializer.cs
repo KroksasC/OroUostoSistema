@@ -178,8 +178,8 @@ namespace OroUostoSystem.Server.DbInitializer
                 var flights = new List<Flight>
                 {
                     new(){
-                        AssignedPilot = true,
-                        AssignedMainPilot = false,
+                        AssignedPilot = null,
+                        AssignedMainPilot = 2,
                         WorkingHours = 3.5f,
                         FlightDate = DateTime.Now.AddDays(-1),
                         Aircraft = "Airbus A320",
@@ -187,8 +187,8 @@ namespace OroUostoSystem.Server.DbInitializer
                         Status = "Arrived"
                     },
                     new(){
-                        AssignedPilot = true,
-                        AssignedMainPilot = true,
+                        AssignedPilot = 2,
+                        AssignedMainPilot = null,
                         WorkingHours = 2.2f,
                         FlightDate = DateTime.Now,
                         Aircraft = "Boeing 737",
@@ -196,8 +196,8 @@ namespace OroUostoSystem.Server.DbInitializer
                         Status = "Boarding"
                     },
                     new(){
-                        AssignedPilot = false,
-                        AssignedMainPilot = false,
+                        AssignedPilot = 2,
+                        AssignedMainPilot = 1,
                         WorkingHours = 4.1f,
                         FlightDate = DateTime.Now.AddDays(1),
                         Aircraft = "Embraer 190",
