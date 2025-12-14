@@ -181,7 +181,7 @@ namespace OroUostoSystem.Server.Controllers
             try
             {
                 var flight = await _context.Flights
-                    .Include(f => f.Routes)
+                    .Include(f => f.Route)
                     .FirstOrDefaultAsync(f => f.Id == flightId);
 
                 if (flight == null)
@@ -331,7 +331,7 @@ namespace OroUostoSystem.Server.Controllers
     public class UpdateFlightRequest
     {
         public string? Aircraft { get; set; }
-        public double? StartingAirport { get; set; }
+        public string? StartingAirport { get; set; }
     }
 
     public class DeclineFlightRequest

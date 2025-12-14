@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OroUostoSystem.Server.Data;
 
@@ -10,9 +11,11 @@ using OroUostoSystem.Server.Data;
 namespace OroUostoSystem.Server.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20251214142325_FlipRouteFlightRelation")]
+    partial class FlipRouteFlightRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -169,6 +172,12 @@ namespace OroUostoSystem.Server.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PilotId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("RouteId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -177,6 +186,10 @@ namespace OroUostoSystem.Server.Migrations
                         .HasColumnType("REAL");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PilotId");
+
+                    b.HasIndex("RouteId");
 
                     b.ToTable("Flights");
                 });
@@ -596,6 +609,7 @@ namespace OroUostoSystem.Server.Migrations
                 {
                     b.HasOne("Pilot", "Pilot")
                         .WithMany("Flights")
+                        .HasForeignKey("PilotId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Route", "Route")
