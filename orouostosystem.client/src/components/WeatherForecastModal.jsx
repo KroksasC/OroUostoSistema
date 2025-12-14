@@ -2,6 +2,11 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 
 export default function WeatherForecastModal({ isOpen, onClose, forecast }) {
   if (!isOpen) return null
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString()
+  }
+
   return (
     <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
       <div className="modal-dialog">
@@ -11,11 +16,10 @@ export default function WeatherForecastModal({ isOpen, onClose, forecast }) {
             <button type="button" className="btn-close" onClick={onClose}></button>
           </div>
           <div className="modal-body">
-            <p><strong>Humidity:</strong> {forecast.humidity}%</p>
-            <p><strong>Temperature:</strong> {forecast.temperature}°C</p>
-            <p><strong>Created At:</strong> {forecast.createdAt}</p>
-            <p><strong>Pressure:</strong> {forecast.pressure} hPa</p>
-            <p><strong>Wind Speed:</strong> {forecast.windSpeed} km/h</p>
+            <p><strong>Humidity:</strong> {forecast.humidity.toFixed(1)}%</p>
+            <p><strong>Temperature:</strong> {forecast.temperature.toFixed(1)}°C</p>
+            <p><strong>Check Time:</strong> {formatDate(forecast.checkTime)}</p>
+            <p><strong>Wind Speed:</strong> {forecast.windSpeed.toFixed(1)} km/h</p>
             <div className="text-center mt-3">
               <button className="btn btn-secondary" onClick={onClose}>Close</button>
             </div>

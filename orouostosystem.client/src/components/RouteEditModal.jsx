@@ -15,49 +15,58 @@ export default function RouteEditModal({ isOpen, onClose, route }) {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const formatDuration = (hours) => {
+    const h = Math.floor(hours)
+    const m = Math.round((hours - h) * 60)
+    return `${h}h ${m}m`
+  }
+
   return (
     <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
       <div className="modal-dialog modal-lg">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Edit Route</h5>
+            <h5 className="modal-title">Route Details</h5>
             <button type="button" className="btn-close" onClick={onClose}></button>
           </div>
           <div className="modal-body">
             <form>
               <div className="mb-3">
                 <label className="form-label">Source Airfield Code</label>
-                <input name="source" value={formData.source} onChange={handleChange} className="form-control" required />
+                <input name="takeoffAirport" value={formData.takeoffAirport} onChange={handleChange} className="form-control" readOnly />
               </div>
               <div className="mb-3">
                 <label className="form-label">Destination Airfield Code</label>
-                <input name="destination" value={formData.destination} onChange={handleChange} className="form-control" required />
+                <input name="landingAirport" value={formData.landingAirport} onChange={handleChange} className="form-control" readOnly />
               </div>
               <div className="mb-3">
                 <label className="form-label">Distance (km)</label>
-                <input type="number" name="distance" value={formData.distance} onChange={handleChange} className="form-control" required />
+                <input type="number" name="distance" value={formData.distance} onChange={handleChange} className="form-control" readOnly />
               </div>
               <div className="mb-3">
                 <label className="form-label">Duration</label>
-                <input name="duration" value={formData.duration} onChange={handleChange} className="form-control" placeholder="e.g. 7h 05m" required />
+                <input name="duration" value={formatDuration(formData.duration)} onChange={handleChange} className="form-control" readOnly />
               </div>
               <div className="mb-3">
                 <label className="form-label">Flight Altitude</label>
-                <input name="altitude" value={formData.altitude} onChange={handleChange} className="form-control" required />
+                <input name="altitude" value={formData.altitude} onChange={handleChange} className="form-control" readOnly />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Flight Number</label>
+                <input name="flightNumber" value={formData.flightNumber} onChange={handleChange} className="form-control" readOnly />
               </div>
               <div className="d-flex justify-content-between mt-3">
-                <button type="button" className="btn btn-info" onClick={() => setShowForecast(true)}>View Forecast</button>
-                <div>
-                  <button type="button" className="btn btn-secondary me-2" onClick={onClose}>Cancel</button>
-                  <button type="button" className="btn btn-success">Save</button>
-                </div>
+                {formData.latestForecast && (
+                  <button type="button" className="btn btn-info" onClick={() => setShowForecast(true)}>View Forecast</button>
+                )}
+                <button type="button" className="btn btn-secondary ms-auto" onClick={onClose}>Close</button>
               </div>
             </form>
           </div>
         </div>
       </div>
-      {showForecast && (
-        <WeatherForecastModal isOpen={showForecast} forecast={formData.forecast} onClose={() => setShowForecast(false)} />
+      {showForecast && formData.latestForecast && (
+        <WeatherForecastModal isOpen={showForecast} forecast={formData.latestForecast} onClose={() => setShowForecast(false)} />
       )}
     </div>
   )

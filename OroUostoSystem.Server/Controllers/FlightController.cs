@@ -144,7 +144,7 @@ namespace OroUostoSystem.Server.Controllers
                             ? f.Routes.First().LandingAirport 
                             : "No Destination",
                         startingAirport = f.Routes.Any()
-                            ? f.Routes.First().TakeoffAirport.ToString()
+                            ? f.Routes.First().TakeoffAirport
                             : "TBD",
                         takeOffTime = f.FlightDate,
                         planeName = f.Aircraft ?? "Unknown",
@@ -244,10 +244,10 @@ namespace OroUostoSystem.Server.Controllers
                 }
 
                 // Update starting airport (in the route)
-                if (request.StartingAirport.HasValue && flight.Routes.Any())
+                if (!string.IsNullOrEmpty(request.StartingAirport) && flight.Routes.Any())
                 {
                     var route = flight.Routes.First();
-                    route.TakeoffAirport = request.StartingAirport.Value;
+                    route.TakeoffAirport = request.StartingAirport;
                 }
 
                 await _context.SaveChangesAsync();
@@ -261,7 +261,7 @@ namespace OroUostoSystem.Server.Controllers
                         id = flight.Id,
                         aircraft = flight.Aircraft,
                         startingAirport = flight.Routes.Any() 
-                            ? flight.Routes.First().TakeoffAirport.ToString() 
+                            ? flight.Routes.First().TakeoffAirport 
                             : "TBD"
                     }
                 });
@@ -287,6 +287,6 @@ namespace OroUostoSystem.Server.Controllers
     public class UpdateFlightRequest
     {
         public string? Aircraft { get; set; }
-        public double? StartingAirport { get; set; }
+        public string? StartingAirport { get; set; }
     }
-    }
+}

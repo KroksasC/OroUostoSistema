@@ -311,6 +311,37 @@ namespace OroUostoSystem.Server.DbInitializer
                 await _context.SaveChangesAsync();
             }
 
+            // ==========================================
+            //  SEED ROUTES
+            // ==========================================
+            if (!_context.Routes.Any())
+            {
+                var flights = _context.Flights.ToList();
+
+                var routes = new List<Route>
+                {
+                    new(){
+                        TakeoffAirport = "KUN",
+                        LandingAirport = "VNO",
+                        Distance = 5540,
+                        Duration = 7.08,
+                        Altitude = 35000,
+                        FlightId = flights[0].Id
+                    },
+                    new(){
+                        TakeoffAirport = "KUN",
+                        LandingAirport = "PLQ",
+                        Distance = 8770,
+                        Duration = 11.5,
+                        Altitude = 36000,
+                        FlightId = flights[1].Id
+                    }
+                };
+
+                _context.Routes.AddRange(routes);
+                await _context.SaveChangesAsync();
+            }
+
         }
 
         // =====================================================
