@@ -85,7 +85,7 @@ namespace OroUostoSystem.Server.Data
             // -----------------------------
             builder.Entity<ServiceOrder>()
                 .HasOne(o => o.Client)
-                .WithMany()
+                .WithMany(c => c.ServiceOrders)
                 .HasForeignKey(o => o.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
 

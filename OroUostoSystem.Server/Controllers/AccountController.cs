@@ -6,28 +6,30 @@ using OroUostoSystem.Server.Models;
 using OroUostoSystem.Server.Models.DTO;
 using OroUostoSystem.Server.Utility;
 
-namespace MaistoSistema2.Server.Controllers
+namespace OroUostoSystem.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class AccountController : ControllerBase
     {
-
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly SignInManager<User> _signInManager;
-        private readonly ITokenService _tokenservive;
+        private readonly ITokenService _tokenService;
+        private readonly DataContext _context;
 
-        public AccountController(DataContext context,
+        public AccountController(
+            DataContext context,
             UserManager<User> userManager,
             ITokenService tokenService,
             RoleManager<IdentityRole> roleManager,
             SignInManager<User> signInManager)
         {
+            _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
             _signInManager = signInManager;
-            _tokenservive = tokenService;
+            _tokenService = tokenService;
         }
 
         [HttpPost("login")]
@@ -35,28 +37,25 @@ namespace MaistoSistema2.Server.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
-            {
                 return Unauthorized("Invalid username or password.");
-            }
+
             var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
             if (!result.Succeeded)
-            {
                 return Unauthorized("Invalid username or password.");
-            };
 
-            var token = _tokenservive.CreateToken(user);
+            var token = _tokenService.CreateToken(user);
 
             return Ok(new
             {
-                message = "Login succesfull",
+                message = "Login successful",
                 username = user.UserName,
                 userId = user.Id,
-                token = token,
-                Role = await _userManager.GetRolesAsync(user)
+                token,
+                role = await _userManager.GetRolesAsync(user)
             });
-
         }
 
         [HttpPost("register")]
@@ -64,21 +63,36 @@ namespace MaistoSistema2.Server.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
             var userExists = await _userManager.FindByEmailAsync(model.Email);
             if (userExists != null)
                 return BadRequest("User already exists!");
-            User user = new()
+
+            var user = new User
             {
                 Email = model.Email,
-                UserName = model.Name,
+                UserName = model.Email
             };
+
             var result = await _userManager.CreateAsync(user, model.Password);
-            _userManager.AddToRoleAsync(user, Helper.RegisteredUser).GetAwaiter().GetResult();
             if (!result.Succeeded)
+                return BadRequest("User creation failed!");
+
+            await _userManager.AddToRoleAsync(user, Helper.Client);
+
+            var client = new Client
             {
-                return BadRequest("User creation failed! Please check user details and try again.");
-            }
-            return Ok("User created successfully!");
+                UserId = user.Id,
+                BirthDate = DateTime.Now.AddYears(-18),
+                LoyaltyLevel = "Bronze",
+                Points = 0,
+                RegistrationDate = DateTime.Now
+            };
+
+            _context.Clients.Add(client);
+            await _context.SaveChangesAsync();
+
+            return Ok("User registered successfully!");
         }
     }
 }
