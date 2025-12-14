@@ -50,10 +50,6 @@ export default function RoutesList() {
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this route?')) {
-      return
-    }
-
     try {
       const res = await fetch(`/api/routes/${id}`, {
         method: 'DELETE'

@@ -117,6 +117,7 @@ namespace OroUostoSystem.Server.Controllers
                 Humidity = weatherData.Humidity,
                 Temperature = weatherData.Temperature,
                 WindSpeed = weatherData.WindSpeed,
+                Pressure = weatherData.Pressure,
                 CheckTime = DateTime.Now
             };
 
@@ -175,11 +176,47 @@ namespace OroUostoSystem.Server.Controllers
                         ? humidityProp.GetProperty("value").GetDouble() 
                         : 50;
 
+                    var pressure = 1013.25;
+                    try
+                    {
+                        var observationUrl = pointData.RootElement
+                            .GetProperty("properties")
+                            .GetProperty("observationStations")
+                            .GetString();
+                        
+                        var stationsResponse = await _httpClient.GetStringAsync(observationUrl);
+                        var stationsData = JsonDocument.Parse(stationsResponse);
+                        var stations = stationsData.RootElement
+                            .GetProperty("features");
+                        
+                        if (stations.GetArrayLength() > 0)
+                        {
+                            var stationUrl = stations[0]
+                                .GetProperty("id")
+                                .GetString() + "/observations/latest";
+                            
+                            var observationResponse = await _httpClient.GetStringAsync(stationUrl);
+                            var observationData = JsonDocument.Parse(observationResponse);
+                            
+                            if (observationData.RootElement
+                                .GetProperty("properties")
+                                .TryGetProperty("barometricPressure", out var pressureProp))
+                            {
+                                var pressurePa = pressureProp.GetProperty("value").GetDouble();
+                                pressure = pressurePa / 100;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
                     return new WeatherData
                     {
                         Temperature = Math.Round(tempC, 1),
                         Humidity = Math.Round(humidity, 1),
-                        WindSpeed = Math.Round(windSpeedKmh, 1)
+                        WindSpeed = Math.Round(windSpeedKmh, 1),
+                        Pressure = Math.Round(pressure, 1)
                     };
                 }
             }
@@ -191,7 +228,8 @@ namespace OroUostoSystem.Server.Controllers
             {
                 Temperature = 15,
                 Humidity = 60,
-                WindSpeed = 20
+                WindSpeed = 20,
+                Pressure = 1013.25
             };
         }
 
@@ -210,6 +248,7 @@ namespace OroUostoSystem.Server.Controllers
             public double Temperature { get; set; }
             public double Humidity { get; set; }
             public double WindSpeed { get; set; }
+            public double Pressure { get; set; }
         }
     }
 }
