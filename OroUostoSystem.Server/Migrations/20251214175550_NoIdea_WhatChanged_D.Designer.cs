@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OroUostoSystem.Server.Data;
 
@@ -10,9 +11,11 @@ using OroUostoSystem.Server.Data;
 namespace OroUostoSystem.Server.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20251214175550_NoIdea_WhatChanged_D")]
+    partial class NoIdea_WhatChanged_D
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -539,9 +542,6 @@ namespace OroUostoSystem.Server.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<double>("Humidity")
-                        .HasColumnType("REAL");
-
-                    b.Property<double>("Pressure")
                         .HasColumnType("REAL");
 
                     b.Property<int>("RouteId")
