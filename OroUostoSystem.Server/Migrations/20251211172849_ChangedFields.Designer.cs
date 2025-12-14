@@ -14,7 +14,7 @@ namespace OroUostoSystem.Server.Migrations
     [Migration("20251211172849_ChangedFields")]
     partial class ChangedFields
     {
-        /// <inheritdoc />
+        /// <inheritdoc />asdf
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618

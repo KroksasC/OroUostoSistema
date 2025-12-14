@@ -11,6 +11,7 @@ public class Route
     public double Altitude { get; set; }
 
     // Navigation
+    //asdasd
     public ICollection<WeatherForecast> WeatherForecasts { get; set; } = new List<WeatherForecast>();
     public ICollection<Flight> Flights { get; set; } = new List<Flight>();
 }
