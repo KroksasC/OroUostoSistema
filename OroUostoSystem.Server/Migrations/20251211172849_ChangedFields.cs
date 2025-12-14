@@ -4,7 +4,7 @@
 
 namespace OroUostoSystem.Server.Migrations
 {
-    /// <inheritdoc />
+    /// <inheritdoc />adsf
     public partial class ChangedFields : Migration
     {
         /// <inheritdoc />

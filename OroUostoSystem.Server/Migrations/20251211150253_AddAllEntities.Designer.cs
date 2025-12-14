@@ -490,7 +490,7 @@ namespace OroUostoSystem.Server.Migrations
 
                     b.ToTable("Services");
                 });
-
+//asdf
             modelBuilder.Entity("ServiceOrder", b =>
                 {
                     b.Property<int>("Id")

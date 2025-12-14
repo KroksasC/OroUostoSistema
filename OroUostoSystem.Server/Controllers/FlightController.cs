@@ -295,7 +295,7 @@ namespace OroUostoSystem.Server.Controllers
                 }
                 else
                 {
-                    // Decline completely - remove pilot from flight
+                    // Decline completely - remove pilot from flightasdf
                     if (isMainPilot)
                         flight.AssignedMainPilot = null;
                     if (isCoPilot)

@@ -15,5 +15,6 @@ public class Route
     public Flight Flight { get; set; }
 
     // Navigation
+    //asdasd
     public ICollection<WeatherForecast> WeatherForecasts { get; set; } = new List<WeatherForecast>();
 }

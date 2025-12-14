@@ -4,7 +4,7 @@
 
 namespace OroUostoSystem.Server.Migrations
 {
-    /// <inheritdoc />
+    /// <inheritdoc />asdf
     public partial class a : Migration
     {
         /// <inheritdoc />
