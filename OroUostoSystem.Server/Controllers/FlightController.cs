@@ -17,7 +17,6 @@ namespace OroUostoSystem.Server.Controllers
             _logger = logger;
         }
 
-        // GET pilot profile by UserId (converts AspNetUsers.Id → Pilots.Id)
         [HttpGet("pilot/profile/{userId}")]
         public async Task<IActionResult> GetPilotProfile(string userId)
         {
@@ -48,30 +47,46 @@ namespace OroUostoSystem.Server.Controllers
             }
         }
 
-        // GET flights for specific pilot
         [HttpGet("pilot/{pilotId}")]
         public async Task<IActionResult> GetPilotFlights(int pilotId)
         {
             try
             {
                 var flights = await _context.Flights
-                    .Include(f => f.Routes)
-                    .Where(f => f.AssignedMainPilot == pilotId || f.AssignedPilot == pilotId)
+                    .Include(f => f.Route)
+                    .Include(f => f.AssignedMainPilotNavigation)
+                        .ThenInclude(p => p.User)
+                    .Include(f => f.AssignedPilotNavigation)
+                        .ThenInclude(p => p.User)
+                    .Where(f => f.AssignedPilot == pilotId || f.AssignedMainPilot == pilotId)
                     .Select(f => new
                     {
                         id = f.Id,
                         flightId = f.FlightNumber,
-                        destination = f.Routes.Any() ? f.Routes.First().LandingAirport : "No Destination",
-                        startingAirport = f.Routes.Any() ? f.Routes.First().TakeoffAirport.ToString() : "TBD",
+                        destination = f.Route != null ? f.Route.LandingAirport : "No Destination",
+                        startingAirport = f.Route != null ? f.Route.TakeoffAirport : "TBD",
                         takeOffTime = f.FlightDate,
                         planeName = f.Aircraft,
                         status = f.Status,
                         isSoon = (f.FlightDate - DateTime.UtcNow).TotalHours < 24,
                         hoursUntil = (f.FlightDate - DateTime.UtcNow).TotalHours,
-                        routesCount = f.Routes.Count,
                         assignedMainPilotId = f.AssignedMainPilot,
                         assignedPilotId = f.AssignedPilot,
-                        repeatIntervalHours = f.RepeatIntervalHours
+                        repeatIntervalHours = f.RepeatIntervalHours,
+                        mainPilotName = f.AssignedMainPilotNavigation != null && f.AssignedMainPilotNavigation.User != null
+                            ? $"{f.AssignedMainPilotNavigation.User.FirstName} {f.AssignedMainPilotNavigation.User.LastName}"
+                            : null,
+                        coPilotName = f.AssignedPilotNavigation != null && f.AssignedPilotNavigation.User != null
+                            ? $"{f.AssignedPilotNavigation.User.FirstName} {f.AssignedPilotNavigation.User.LastName}"
+                            : null,
+                        pilotName = f.AssignedMainPilotNavigation != null && f.AssignedMainPilotNavigation.User != null
+                            ? $"Main: {f.AssignedMainPilotNavigation.User.FirstName} {f.AssignedMainPilotNavigation.User.LastName}" +
+                              (f.AssignedPilotNavigation != null && f.AssignedPilotNavigation.User != null
+                                  ? $" | Co-Pilot: {f.AssignedPilotNavigation.User.FirstName} {f.AssignedPilotNavigation.User.LastName}"
+                                  : "")
+                            : f.AssignedPilotNavigation != null && f.AssignedPilotNavigation.User != null
+                                ? $"Co-Pilot: {f.AssignedPilotNavigation.User.FirstName} {f.AssignedPilotNavigation.User.LastName}"
+                                : "Not Assigned"
                     })
                     .ToListAsync();
 
@@ -84,28 +99,26 @@ namespace OroUostoSystem.Server.Controllers
             }
         }
 
-        // GET unassigned flights (both pilot slots empty)
         [HttpGet("unassigned")]
         public async Task<IActionResult> GetUnassignedFlights()
         {
             try
             {
                 var flights = await _context.Flights
-                    .Include(f => f.Routes)
-                    .Where(f => f.AssignedMainPilot == null && f.AssignedPilot == null)
+                    .Include(f => f.Route)
+                    .Where(f => f.AssignedPilot == null && f.AssignedMainPilot == null)
                     .Select(f => new
                     {
                         id = f.Id,
                         flightId = f.FlightNumber,
-                        destination = f.Routes.Any() ? f.Routes.First().LandingAirport : "No Destination",
-                        startingAirport = f.Routes.Any() ? f.Routes.First().TakeoffAirport.ToString() : "TBD",
+                        destination = f.Route != null ? f.Route.LandingAirport : "No Destination",
+                        startingAirport = f.Route != null ? f.Route.TakeoffAirport : "TBD",
                         takeOffTime = f.FlightDate,
                         planeName = f.Aircraft,
                         status = f.Status,
                         isSoon = (f.FlightDate - DateTime.UtcNow).TotalHours < 24,
                         hoursUntil = (f.FlightDate - DateTime.UtcNow).TotalHours,
-                        routesCount = f.Routes.Count,
-                        repeatIntervalHours = f.RepeatIntervalHours
+                        pilotName = "Not Assigned"
                     })
                     .ToListAsync();
 
@@ -118,7 +131,6 @@ namespace OroUostoSystem.Server.Controllers
             }
         }
 
-        // POST accept flight
         [HttpPost("accept/{flightId}")]
         public async Task<IActionResult> AcceptFlight(int flightId, [FromBody] AcceptFlightRequest request)
         {
@@ -136,9 +148,8 @@ namespace OroUostoSystem.Server.Controllers
                     return NotFound(new { success = false, message = "Flight not found" });
                 }
 
-                // Assign to appropriate role
                 bool isMainPilot = request.Role?.ToLower() == "main" || request.Role?.ToLower() == "captain";
-                
+
                 if (isMainPilot)
                 {
                     if (flight.AssignedMainPilot != null)
@@ -163,8 +174,7 @@ namespace OroUostoSystem.Server.Controllers
                     success = true,
                     message = $"Flight accepted as {(isMainPilot ? "main pilot" : "co-pilot")}",
                     flightId = flight.Id,
-                    assignedMainPilotId = flight.AssignedMainPilot,
-                    assignedPilotId = flight.AssignedPilot
+                    pilotId = pilot.Id
                 });
             }
             catch (Exception ex)
@@ -174,7 +184,6 @@ namespace OroUostoSystem.Server.Controllers
             }
         }
 
-        // PUT update flight
         [HttpPut("{flightId}")]
         public async Task<IActionResult> UpdateFlight(int flightId, [FromBody] UpdateFlightRequest request)
         {
@@ -189,16 +198,14 @@ namespace OroUostoSystem.Server.Controllers
                     return NotFound(new { success = false, message = "Flight not found" });
                 }
 
-                // Update aircraft
                 if (!string.IsNullOrEmpty(request.Aircraft))
                 {
                     flight.Aircraft = request.Aircraft;
                 }
 
-                // Update starting airport (runway number in route)
-                if (request.StartingAirport.HasValue && flight.Routes.Any())
+                if (!string.IsNullOrEmpty(request.StartingAirport) && flight.Route != null)
                 {
-                    flight.Routes.First().TakeoffAirport = request.StartingAirport.Value;
+                    flight.Route.TakeoffAirport = request.StartingAirport;
                 }
 
                 await _context.SaveChangesAsync();
@@ -212,7 +219,6 @@ namespace OroUostoSystem.Server.Controllers
             }
         }
 
-        // POST decline flight
         [HttpPost("decline/{flightId}")]
         public async Task<IActionResult> DeclineFlight(int flightId, [FromBody] DeclineFlightRequest request)
         {
@@ -225,7 +231,7 @@ namespace OroUostoSystem.Server.Controllers
                 }
 
                 var flight = await _context.Flights
-                    .Include(f => f.Routes)
+                    .Include(f => f.Route)
                     .Include(f => f.Baggages)
                     .FirstOrDefaultAsync(f => f.Id == flightId);
 
@@ -234,7 +240,6 @@ namespace OroUostoSystem.Server.Controllers
                     return NotFound(new { success = false, message = "Flight not found" });
                 }
 
-                // Check if pilot is assigned to this flight
                 bool isMainPilot = flight.AssignedMainPilot == pilot.Id;
                 bool isCoPilot = flight.AssignedPilot == pilot.Id;
 
@@ -243,75 +248,18 @@ namespace OroUostoSystem.Server.Controllers
                     return BadRequest(new { success = false, message = "You are not assigned to this flight" });
                 }
 
-                // Handle repeating vs one-time flight
-                if (flight.RepeatIntervalHours.HasValue && request.DeclineType == "once")
+                if (isMainPilot)
+                    flight.AssignedMainPilot = null;
+                if (isCoPilot)
+                    flight.AssignedPilot = null;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new
                 {
-                    // Create a one-time copy of this flight for the current date
-                    var oneTimeFlight = new Flight
-                    {
-                        AssignedPilot = flight.AssignedPilot,
-                        AssignedMainPilot = flight.AssignedMainPilot,
-                        WorkingHours = flight.WorkingHours,
-                        FlightDate = flight.FlightDate,
-                        Aircraft = flight.Aircraft,
-                        FlightNumber = flight.FlightNumber + "-ONCE",
-                        Status = flight.Status,
-                        RepeatIntervalHours = null // One-time only
-                    };
-
-                    // Remove pilot from the one-time copy
-                    if (isMainPilot)
-                        oneTimeFlight.AssignedMainPilot = null;
-                    if (isCoPilot)
-                        oneTimeFlight.AssignedPilot = null;
-
-                    _context.Flights.Add(oneTimeFlight);
-                    await _context.SaveChangesAsync();
-
-                    // Copy routes for the one-time flight
-                    foreach (var route in flight.Routes)
-                    {
-                        var newRoute = new Route
-                        {
-                            LandingAirport = route.LandingAirport,
-                            Distance = route.Distance,
-                            TakeoffAirport = route.TakeoffAirport,
-                            Duration = route.Duration,
-                            Altitude = route.Altitude,
-                            FlightId = oneTimeFlight.Id
-                        };
-                        _context.Routes.Add(newRoute);
-                    }
-
-                    await _context.SaveChangesAsync();
-
-                    return Ok(new
-                    {
-                        success = true,
-                        message = "You have been removed from this single occurrence. The repeating flight continues.",
-                        declineType = "once",
-                        newFlightId = oneTimeFlight.Id
-                    });
-                }
-                else
-                {
-                    // Decline completely - remove pilot from flight
-                    if (isMainPilot)
-                        flight.AssignedMainPilot = null;
-                    if (isCoPilot)
-                        flight.AssignedPilot = null;
-
-                    await _context.SaveChangesAsync();
-
-                    return Ok(new
-                    {
-                        success = true,
-                        message = request.DeclineType == "permanent" 
-                            ? "You have been permanently removed from this repeating flight"
-                            : "You have been removed from this flight",
-                        declineType = request.DeclineType ?? "complete"
-                    });
-                }
+                    success = true,
+                    message = "You have been removed from this flight"
+                });
             }
             catch (Exception ex)
             {
@@ -321,11 +269,10 @@ namespace OroUostoSystem.Server.Controllers
         }
     }
 
-    // Request DTOs
     public class AcceptFlightRequest
     {
         public string UserId { get; set; } = string.Empty;
-        public string? Role { get; set; } // "main" or "co-pilot"
+        public string? Role { get; set; }
     }
 
     public class UpdateFlightRequest
@@ -337,6 +284,6 @@ namespace OroUostoSystem.Server.Controllers
     public class DeclineFlightRequest
     {
         public string UserId { get; set; } = string.Empty;
-        public string? DeclineType { get; set; } // "once", "permanent", or null for one-time flights
+        public string? DeclineType { get; set; }
     }
 }
