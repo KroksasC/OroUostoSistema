@@ -316,29 +316,60 @@ namespace OroUostoSystem.Server.DbInitializer
             // ==========================================
             if (!_context.Routes.Any())
             {
-                var flights = _context.Flights.ToList();
-
                 var routes = new List<Route>
                 {
                     new(){
                         TakeoffAirport = "KUN",
                         LandingAirport = "VNO",
                         Distance = 5540,
-                        Duration = 7.08,
-                        Altitude = 35000,
-                        FlightId = flights[0].Id
+                        Duration = 7.08, // 7h 5m in hours
+                        Altitude = 35000
                     },
                     new(){
                         TakeoffAirport = "KUN",
                         LandingAirport = "PLQ",
                         Distance = 8770,
-                        Duration = 11.5,
-                        Altitude = 36000,
-                        FlightId = flights[1].Id
+                        Duration = 11.5, // 11h 30m in hours
+                        Altitude = 36000
                     }
                 };
 
                 _context.Routes.AddRange(routes);
+                await _context.SaveChangesAsync();
+
+                // Now assign routes to flights
+                var flights = _context.Flights.ToList();
+                if (flights.Count >= 2)
+                {
+                    flights[0].RouteId = routes[0].Id;
+                    flights[1].RouteId = routes[1].Id;
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            // ==========================================
+            //  SEED WEATHER FORECASTS
+            // ==========================================
+            if (!_context.WeatherForecasts.Any())
+            {
+                var routes = _context.Routes.ToList();
+                var random = new Random();
+
+                var forecasts = new List<WeatherForecast>();
+
+                foreach (var route in routes)
+                {
+                    forecasts.Add(new WeatherForecast
+                    {
+                        RouteId = route.Id,
+                        Humidity = 55 + random.NextDouble() * 10,
+                        Temperature = 10 + random.NextDouble() * 10,
+                        CheckTime = DateTime.Now.AddHours(-random.Next(1, 24)),
+                        WindSpeed = 20 + random.NextDouble() * 15
+                    });
+                }
+
+                _context.WeatherForecasts.AddRange(forecasts);
                 await _context.SaveChangesAsync();
             }
 

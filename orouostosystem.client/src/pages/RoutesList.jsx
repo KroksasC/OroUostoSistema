@@ -21,16 +21,17 @@ export default function RoutesList() {
   const isPilot = hasRole("Pilot")
 
   // Load routes from API
-  useEffect(() => {
-    const loadRoutes = async () => {
-      try {
-        const res = await fetch('/api/routes')
-        const data = await res.json()
-        setRoutes(data)
-      } catch (error) {
-        console.error('Failed to load routes:', error)
-      }
+  const loadRoutes = async () => {
+    try {
+      const res = await fetch('/api/routes')
+      const data = await res.json()
+      setRoutes(data)
+    } catch (error) {
+      console.error('Failed to load routes:', error)
     }
+  }
+
+  useEffect(() => {
     loadRoutes()
   }, [])
 
@@ -42,6 +43,10 @@ export default function RoutesList() {
   const closeModal = () => {
     setIsModalOpen(false)
     setEditingRoute(null)
+  }
+
+  const handleSave = () => {
+    loadRoutes()
   }
 
   const handleDelete = async (id) => {
@@ -120,7 +125,12 @@ export default function RoutesList() {
         <button className="btn btn-secondary" onClick={() => navigate('/')}>Back</button>
       </div>
       {isModalOpen && editingRoute && (
-        <RouteEditModal isOpen={isModalOpen} onClose={closeModal} route={editingRoute} />
+        <RouteEditModal 
+          isOpen={isModalOpen} 
+          onClose={closeModal} 
+          route={editingRoute}
+          onSave={handleSave}
+        />
       )}
     </div>
   )

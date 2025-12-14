@@ -9,11 +9,14 @@ namespace OroUostoSystem.Server.Mapping
         public RouteProfile()
         {
             CreateMap<Route, RouteDto>()
-                .ForMember(dest => dest.FlightNumber, opt => opt.MapFrom(src => src.Flight.FlightNumber))
+                .ForMember(dest => dest.FlightNumbers, opt => opt.MapFrom(src => 
+                    src.Flights.Select(f => f.FlightNumber).ToList()))
                 .ForMember(dest => dest.LatestForecast, opt => opt.MapFrom(src => 
                     src.WeatherForecasts.OrderByDescending(w => w.CheckTime).FirstOrDefault()));
 
             CreateMap<WeatherForecast, WeatherForecastDto>();
+
+            CreateMap<RouteUpdateDto, Route>();
         }
     }
 }
