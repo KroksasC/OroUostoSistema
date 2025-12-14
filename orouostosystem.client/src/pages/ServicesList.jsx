@@ -11,7 +11,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 
 export default function ServicesList() {
   const [services, setServices] = useState([])
-
+  const role = localStorage.getItem("role") ? JSON.parse(localStorage.getItem("role"))[0] : null;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
@@ -76,15 +76,19 @@ export default function ServicesList() {
 
   return (
     <div className="container mt-5" style={{ maxWidth: "900px" }}>
-      {/* Header + Create button */}
+
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="text-center flex-grow-1">Service List</h2>
-        <button
-          className="btn btn-success ms-3"
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          + Create
-        </button>
+
+        {(role === "Worker") && (
+          <button
+            className="btn btn-success ms-3"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            + Create
+          </button>
+        )}
+
       </div>
 
       {/* Services grid */}

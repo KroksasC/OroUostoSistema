@@ -44,9 +44,7 @@ namespace MaistoSistema2.Server.Controllers
             if (!result.Succeeded)
             {
                 return Unauthorized("Invalid username or password.");
-            }
-
-            //HttpContent.Session.SetString("Username", user.UserName);
+            };
 
             var token = _tokenservive.CreateToken(user);
 

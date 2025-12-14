@@ -54,22 +54,19 @@ namespace OroUostoSystem.Server.Controllers
             try
             {
                 var flights = await _context.Flights
-                    .Include(f => f.Routes)
+                    .Include(f => f.Route)
                     .Take(10)
                     .Select(f => new
                     {
                         id = f.Id,
                         flightId = f.FlightNumber,
-                        destination = f.Routes.Any() 
-                            ? f.Routes.First().LandingAirport 
-                            : "No Destination",
+                        destination = f.Route != null ? f.Route.LandingAirport : "No Destination",
                         takeOffTime = f.FlightDate,
                         planeName = f.Aircraft ?? "Unknown",
                         pilotName = "Sample Pilot",
                         status = f.Status ?? "Scheduled",
                         isSoon = (f.FlightDate - DateTime.UtcNow).TotalHours < 24,
                         hoursUntil = (f.FlightDate - DateTime.UtcNow).TotalHours,
-                        routesCount = f.Routes.Count
                     })
                     .ToListAsync();
 
@@ -134,24 +131,19 @@ namespace OroUostoSystem.Server.Controllers
             try
             {
                 var unassignedFlights = await _context.Flights
-                    .Include(f => f.Routes)
+                    .Include(f => f.Route)
                     .Where(f => f.PilotId == null) // Flights without assigned pilot
                     .Select(f => new
                     {
                         id = f.Id,
                         flightId = f.FlightNumber,
-                        destination = f.Routes.Any() 
-                            ? f.Routes.First().LandingAirport 
-                            : "No Destination",
-                        startingAirport = f.Routes.Any()
-                            ? f.Routes.First().TakeoffAirport
-                            : "TBD",
+                        destination = f.Route != null ? f.Route.LandingAirport : "No Destination",
+                        startingAirport = f.Route != null ? f.Route.TakeoffAirport : "TBD",
                         takeOffTime = f.FlightDate,
                         planeName = f.Aircraft ?? "Unknown",
                         status = f.Status ?? "Scheduled",
                         isSoon = (f.FlightDate - DateTime.UtcNow).TotalHours < 24,
                         hoursUntil = (f.FlightDate - DateTime.UtcNow).TotalHours,
-                        routesCount = f.Routes.Count
                     })
                     .ToListAsync();
 
@@ -229,7 +221,7 @@ namespace OroUostoSystem.Server.Controllers
             try
             {
                 var flight = await _context.Flights
-                    .Include(f => f.Routes)
+                    .Include(f => f.Route)
                     .FirstOrDefaultAsync(f => f.Id == flightId);
                 
                 if (flight == null)
@@ -244,9 +236,9 @@ namespace OroUostoSystem.Server.Controllers
                 }
 
                 // Update starting airport (in the route)
-                if (!string.IsNullOrEmpty(request.StartingAirport) && flight.Routes.Any())
+                if (request.StartingAirport != null && flight.Route != null)
                 {
-                    var route = flight.Routes.First();
+                    var route = flight.Route;
                     route.TakeoffAirport = request.StartingAirport;
                 }
 
@@ -260,9 +252,7 @@ namespace OroUostoSystem.Server.Controllers
                     {
                         id = flight.Id,
                         aircraft = flight.Aircraft,
-                        startingAirport = flight.Routes.Any() 
-                            ? flight.Routes.First().TakeoffAirport 
-                            : "TBD"
+                        startingAirport = flight.Route?.TakeoffAirport ?? "TBD"
                     }
                 });
             }

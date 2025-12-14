@@ -63,12 +63,12 @@ namespace OroUostoSystem.Server.Data
                 .OnDelete(DeleteBehavior.SetNull);
 
             // -----------------------------
-            //  Flight ↔ Routes (1 : many)
+            //  Flight ↔ Routes (many : 1)
             // -----------------------------
-            builder.Entity<Route>()
-                .HasOne(r => r.Flight)
-                .WithMany(f => f.Routes)
-                .HasForeignKey(r => r.FlightId)
+            builder.Entity<Flight>()
+                .HasOne(r => r.Route)
+                .WithMany(f => f.Flights)
+                .HasForeignKey(r => r.RouteId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // -----------------------------

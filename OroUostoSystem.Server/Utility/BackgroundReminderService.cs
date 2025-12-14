@@ -61,7 +61,7 @@ namespace OroUostoSystem.Server.Utility
                 var flights = await dbContext.Flights
                     .Include(f => f.Pilot)               // Include Pilot
                         .ThenInclude(p => p.User)        // Include User from Pilot
-                    .Include(f => f.Routes)              // Include Routes for destination
+                    .Include(f => f.Route)              // Include Routes for destination
                     .Where(f => f.PilotId != null &&     // Has assigned pilot
                                f.FlightDate > now &&     // Future flight
                                f.Status != "Completed" && 
@@ -106,9 +106,9 @@ namespace OroUostoSystem.Server.Utility
                         
                         // Get destination from Routes if available
                         var destination = "Unknown";
-                        if (flight.Routes.Any())
+                        if (flight.Route != null)
                         {
-                            var route = flight.Routes.First();
+                            var route = flight.Route;
                             destination = route.LandingAirport;
                             _logger.LogInformation($"   Destination: {destination}");
                         }
@@ -194,7 +194,7 @@ namespace OroUostoSystem.Server.Utility
                         var pilotName = flight.Pilot?.User != null 
                             ? $"{flight.Pilot.User.FirstName} {flight.Pilot.User.LastName}"
                             : "No pilot";
-                        var destination = flight.Routes.FirstOrDefault()?.LandingAirport ?? "Unknown";
+                        var destination = flight.Route?.LandingAirport ?? "Unknown";
                         
                         _logger.LogInformation($"   {flight.FlightNumber}: {flight.Aircraft} to {destination} in {hours:F1}h - {pilotName}");
                     }
