@@ -14,9 +14,12 @@
     public int? PilotId { get; set; }
     public Pilot? Pilot { get; set; }
 
+    // FK - Route
+    public int? RouteId { get; set; }
+    public Route? Route { get; set; }
+
 
     // Navigation
     public ICollection<Baggage> Baggages { get; set; } = new List<Baggage>();
-    public ICollection<Route> Routes { get; set; } = new List<Route>();
 
 }
