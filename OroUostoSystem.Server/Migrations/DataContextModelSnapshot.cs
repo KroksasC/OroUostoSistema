@@ -156,10 +156,10 @@ namespace OroUostoSystem.Server.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("AssignedMainPilot")
+                    b.Property<int?>("AssignedMainPilot")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("AssignedPilot")
+                    b.Property<int?>("AssignedPilot")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("FlightDate")
@@ -169,6 +169,15 @@ namespace OroUostoSystem.Server.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PilotId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("RepeatIntervalHours")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RouteId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -177,6 +186,14 @@ namespace OroUostoSystem.Server.Migrations
                         .HasColumnType("REAL");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AssignedMainPilot");
+
+                    b.HasIndex("AssignedPilot");
+
+                    b.HasIndex("PilotId");
+
+                    b.HasIndex("RouteId");
 
                     b.ToTable("Flights");
                 });
@@ -524,6 +541,9 @@ namespace OroUostoSystem.Server.Migrations
                     b.Property<double>("Humidity")
                         .HasColumnType("REAL");
 
+                    b.Property<double>("Pressure")
+                        .HasColumnType("REAL");
+
                     b.Property<int>("RouteId")
                         .HasColumnType("INTEGER");
 
@@ -594,16 +614,29 @@ namespace OroUostoSystem.Server.Migrations
 
             modelBuilder.Entity("Flight", b =>
                 {
-                    b.HasOne("Pilot", "Pilot")
-                        .WithMany("Flights")
+                    b.HasOne("Pilot", "AssignedMainPilotNavigation")
+                        .WithMany()
+                        .HasForeignKey("AssignedMainPilot")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pilot", "AssignedPilotNavigation")
+                        .WithMany()
+                        .HasForeignKey("AssignedPilot")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pilot", null)
+                        .WithMany("Flights")
+                        .HasForeignKey("PilotId");
 
                     b.HasOne("Route", "Route")
                         .WithMany("Flights")
                         .HasForeignKey("RouteId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
 
-                    b.Navigation("Pilot");
+                    b.Navigation("AssignedMainPilotNavigation");
+
+                    b.Navigation("AssignedPilotNavigation");
 
                     b.Navigation("Route");
                 });

@@ -4,8 +4,6 @@ import FlightDetailModal from "../components/FlightDetailModal";
 import FlightEditModal from "../components/FlightEditModal";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const API_BASE_URL = "http://localhost:5229";
-
 export default function FlightsListPilots() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -22,13 +20,17 @@ export default function FlightsListPilots() {
   }, []);
 
   const initializeAndLoadData = async () => {
-    // Get userId from localStorage
-    const storedUserId = localStorage.getItem("userId") || "31f4a4ce-6e8d-438e-af02-01c3ae28acdc";
+    const storedUserId = localStorage.getItem("userId");
+    if (!storedUserId) {
+      alert("Please login first");
+      navigate("/login");
+      return;
+    }
+    
     setUserId(storedUserId);
 
     try {
-      // Get pilot profile ID
-      const response = await fetch(`${API_BASE_URL}/api/flight/pilot/profile/${storedUserId}`);
+      const response = await fetch(`/api/flight/pilot/profile/${storedUserId}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -37,9 +39,11 @@ export default function FlightsListPilots() {
         await loadRecommendedFlights();
       } else {
         console.warn("No pilot profile found");
+        alert("Pilot profile not found. Please contact administrator.");
       }
     } catch (error) {
       console.error("Error initializing:", error);
+      alert("Failed to load pilot data");
     } finally {
       setLoading(false);
     }
@@ -47,7 +51,7 @@ export default function FlightsListPilots() {
 
   const loadFlights = async (pilotId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/flight/pilot/${pilotId}`);
+      const response = await fetch(`/api/flight/pilot/${pilotId}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -60,7 +64,7 @@ export default function FlightsListPilots() {
 
   const loadRecommendedFlights = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/flight/unassigned`);
+      const response = await fetch(`/api/flight/unassigned`);
       
       if (response.ok) {
         const data = await response.json();
@@ -75,7 +79,7 @@ export default function FlightsListPilots() {
     if (!confirm(`Accept flight ${flight.flightId}?`)) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/flight/accept/${flight.id}`, {
+      const response = await fetch(`/api/flight/accept/${flight.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, role: "co-pilot" })
@@ -85,28 +89,35 @@ export default function FlightsListPilots() {
         alert('Flight accepted!');
         await loadFlights(pilotProfileId);
         await loadRecommendedFlights();
+      } else {
+        const data = await response.json();
+        alert(data.message || 'Failed to accept flight');
       }
     } catch (error) {
+      console.error('Error:', error);
       alert('Failed to accept flight');
     }
   };
 
   const handleSaveFlight = async (updatedFlight) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/flight/${updatedFlight.id}`, {
+      const response = await fetch(`/api/flight/${updatedFlight.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           aircraft: updatedFlight.planeName,
-          startingAirport: parseFloat(updatedFlight.startingAirport)
+          startingAirport: updatedFlight.startingAirport
         })
       });
 
       if (response.ok) {
         alert('Flight updated!');
         await loadFlights(pilotProfileId);
+      } else {
+        throw new Error('Update failed');
       }
     } catch (error) {
+      console.error('Error:', error);
       alert('Failed to update flight');
       throw error;
     }
@@ -114,7 +125,7 @@ export default function FlightsListPilots() {
 
   const handleDeclineFlight = async (flight, declineType) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/flight/decline/${flight.id}`, {
+      const response = await fetch(`/api/flight/decline/${flight.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, declineType })
@@ -131,6 +142,7 @@ export default function FlightsListPilots() {
         alert(data.message || 'Failed to decline flight');
       }
     } catch (error) {
+      console.error('Error:', error);
       alert('Failed to decline flight');
     }
   };
