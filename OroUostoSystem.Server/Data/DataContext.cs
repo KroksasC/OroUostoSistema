@@ -54,13 +54,23 @@ namespace OroUostoSystem.Server.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // -----------------------------
-            //  Flight ↔ Pilot (many : 1)
+            //  Flight ↔ Pilot (nullable foreign keys)
             // -----------------------------
+            // For AssignedPilot (co-pilot)
             builder.Entity<Flight>()
-                .HasOne(f => f.Pilot)
-                .WithMany(p => p.Flights)
-                .HasForeignKey(f => f.PilotId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .HasOne(f => f.AssignedPilotNavigation)
+                .WithMany()
+                .HasForeignKey(f => f.AssignedPilot)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false); // Make it nullable
+
+            // For AssignedMainPilot (main pilot)
+            builder.Entity<Flight>()
+                .HasOne(f => f.AssignedMainPilotNavigation)
+                .WithMany()
+                .HasForeignKey(f => f.AssignedMainPilot)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false); // Make it nullable
 
             // -----------------------------
             //  Flight ↔ Routes (1 : many)

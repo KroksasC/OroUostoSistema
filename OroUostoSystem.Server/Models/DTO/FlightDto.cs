@@ -1,6 +1,10 @@
 namespace OroUostoSystem.Server.Models.DTO
 {
-    public class FlightDto
+    public class AcceptFlightRequest
+{
+    public string UserId { get; set; }
+    public string Role { get; set; }
+}    public class FlightDto
     {
         public int Id { get; set; }
         public string FlightNumber { get; set; } = "";

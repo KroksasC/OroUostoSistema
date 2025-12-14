@@ -36,7 +36,7 @@ namespace OroUostoSystem.Server.Utility
 
                 try
                 {
-                    await CheckFlightRemindersFromDatabaseAsync(); // ← No parameter
+                    await CheckFlightRemindersFromDatabaseAsync();
                 }
                 catch (Exception ex)
                 {
@@ -57,13 +57,15 @@ namespace OroUostoSystem.Server.Utility
             
             try
             {
-                // Get flights with their Pilot and User information
+                // Get flights with BOTH pilot navigations and their User information
                 var flights = await dbContext.Flights
-                    .Include(f => f.Pilot)               // Include Pilot
-                        .ThenInclude(p => p.User)        // Include User from Pilot
-                    .Include(f => f.Routes)              // Include Routes for destination
-                    .Where(f => f.PilotId != null &&     // Has assigned pilot
-                               f.FlightDate > now &&     // Future flight
+                    .Include(f => f.AssignedMainPilotNavigation)     // Include Main Pilot
+                        .ThenInclude(p => p.User)                    // Include User from Main Pilot
+                    .Include(f => f.AssignedPilotNavigation)         // Include Co-Pilot
+                        .ThenInclude(p => p.User)                    // Include User from Co-Pilot
+                    .Include(f => f.Routes)                          // Include Routes for destination
+                    .Where(f => (f.AssignedMainPilot != null || f.AssignedPilot != null) && // Has at least one pilot
+                               f.FlightDate > now &&                 // Future flight
                                f.Status != "Completed" && 
                                f.Status != "Cancelled")
                     .OrderBy(f => f.FlightDate)
@@ -73,7 +75,6 @@ namespace OroUostoSystem.Server.Utility
                 
                 int remindersToSend = 0;
                 int emailsSent = 0;
-                var flightsNeedingReminders = new List<(Flight flight, string email, string name)>();
                 
                 foreach (var flight in flights)
                 {
@@ -82,106 +83,43 @@ namespace OroUostoSystem.Server.Utility
                     // Check if flight is within 24 hours
                     if (hoursUntilFlight <= 24 && hoursUntilFlight > 0)
                     {
-                        // Get email and name from User via Pilot
-                        var userEmail = flight.Pilot?.User?.Email;
-                        var userName = flight.Pilot?.User != null 
-                            ? $"{flight.Pilot.User.FirstName} {flight.Pilot.User.LastName}"
-                            : "Unknown Pilot";
-                        
-                        if (string.IsNullOrEmpty(userEmail))
-                        {
-                            _logger.LogWarning($"⚠️ Flight {flight.FlightNumber}: Pilot has no email!");
-                            continue;
-                        }
-                        
-                        remindersToSend++;
-                        flightsNeedingReminders.Add((flight, userEmail, userName));
-                        
-                        _logger.LogInformation($"📧 REMINDER NEEDED for flight {flight.FlightNumber}");
-                        _logger.LogInformation($"   Aircraft: {flight.Aircraft}");
-                        _logger.LogInformation($"   Date: {flight.FlightDate:yyyy-MM-dd HH:mm}");
-                        _logger.LogInformation($"   Hours until: {hoursUntilFlight:F1}h");
-                        _logger.LogInformation($"   Pilot: {userName} ({userEmail})");
-                        _logger.LogInformation($"   Status: {flight.Status}");
-                        
                         // Get destination from Routes if available
-                        var destination = "Unknown";
-                        if (flight.Routes.Any())
-                        {
-                            var route = flight.Routes.First();
-                            destination = route.LandingAirport;
-                            _logger.LogInformation($"   Destination: {destination}");
-                        }
-                        else
-                        {
-                            _logger.LogInformation($"   Destination: Unknown (no route data)");
-                        }
+                        var destination = flight.Routes.FirstOrDefault()?.LandingAirport ?? "Unknown";
                         
-                        // ============================================
-                        // SEND ACTUAL EMAIL HERE
-                        // ============================================
-                        try
+                        // Send reminder to MAIN PILOT if assigned
+                        if (flight.AssignedMainPilotNavigation != null && 
+                            flight.AssignedMainPilotNavigation.User != null)
                         {
-                            var emailSent = await _emailService.SendFlightReminderAsync(
-                                userEmail,
-                                userName,
-                                flight.FlightNumber,
-                                flight.Aircraft,
-                                flight.FlightDate,
+                            var result = await SendReminderToPilotAsync(
+                                flight, 
+                                flight.AssignedMainPilotNavigation, 
+                                "Main Pilot", 
                                 destination
                             );
                             
-                            if (emailSent)
-                            {
-                                emailsSent++;
-                                _logger.LogInformation($"✅ Email sent for flight {flight.FlightNumber}");
-                                
-                                // Optional: Mark flight as reminded in database
-                                // Uncomment when you add ReminderSent field to Flight model
-                                /*
-                                flight.ReminderSent = true;
-                                flight.ReminderSentAt = now;
-                                dbContext.Flights.Update(flight);
-                                */
-                            }
-                            else
-                            {
-                                _logger.LogWarning($"❌ Failed to send email for flight {flight.FlightNumber}");
-                            }
+                            remindersToSend += result.remindersToSend;
+                            emailsSent += result.emailsSent;
                         }
-                        catch (Exception ex)
+                        
+                        // Send reminder to CO-PILOT if assigned
+                        if (flight.AssignedPilotNavigation != null && 
+                            flight.AssignedPilotNavigation.User != null)
                         {
-                            _logger.LogError(ex, $"💥 Error sending email for flight {flight.FlightNumber}");
+                            var result = await SendReminderToPilotAsync(
+                                flight, 
+                                flight.AssignedPilotNavigation, 
+                                "Co-Pilot", 
+                                destination
+                            );
+                            
+                            remindersToSend += result.remindersToSend;
+                            emailsSent += result.emailsSent;
                         }
                     }
                 }
-                
-                // Save changes to database if we marked any flights as reminded
-                // Uncomment when you add ReminderSent field
-                /*
-                if (emailsSent > 0)
-                {
-                    await dbContext.SaveChangesAsync();
-                    _logger.LogInformation($"💾 Saved {emailsSent} flight reminder statuses to database");
-                }
-                */
                 
                 // Log summary
                 _logger.LogInformation($"📈 Summary: {remindersToSend} needed reminders, {emailsSent} emails sent");
-                
-                if (flightsNeedingReminders.Any())
-                {
-                    _logger.LogInformation("📋 Flights processed:");
-                    foreach (var (flight, email, name) in flightsNeedingReminders)
-                    {
-                        var hours = (flight.FlightDate - now).TotalHours;
-                        _logger.LogInformation($"   • {flight.FlightNumber}: {flight.Aircraft}, {hours:F1}h until, Pilot: {name}");
-                    }
-                }
-                else
-                {
-                    _logger.LogInformation("✅ No flights need reminders right now");
-                }
                 
                 // Show next 5 flights (all, not just needing reminders)
                 var nextFlights = flights.Take(5).ToList();
@@ -191,12 +129,17 @@ namespace OroUostoSystem.Server.Utility
                     foreach (var flight in nextFlights)
                     {
                         var hours = (flight.FlightDate - now).TotalHours;
-                        var pilotName = flight.Pilot?.User != null 
-                            ? $"{flight.Pilot.User.FirstName} {flight.Pilot.User.LastName}"
-                            : "No pilot";
+                        var mainPilotName = flight.AssignedMainPilotNavigation?.User != null 
+                            ? $"{flight.AssignedMainPilotNavigation.User.FirstName} {flight.AssignedMainPilotNavigation.User.LastName}"
+                            : "No main pilot";
+                        var coPilotName = flight.AssignedPilotNavigation?.User != null 
+                            ? $"{flight.AssignedPilotNavigation.User.FirstName} {flight.AssignedPilotNavigation.User.LastName}"
+                            : "No co-pilot";
                         var destination = flight.Routes.FirstOrDefault()?.LandingAirport ?? "Unknown";
                         
-                        _logger.LogInformation($"   {flight.FlightNumber}: {flight.Aircraft} to {destination} in {hours:F1}h - {pilotName}");
+                        _logger.LogInformation($"   {flight.FlightNumber}: {flight.Aircraft} to {destination} in {hours:F1}h");
+                        _logger.LogInformation($"      Main: {mainPilotName}");
+                        _logger.LogInformation($"      Co-Pilot: {coPilotName}");
                     }
                 }
                 else
@@ -210,6 +153,68 @@ namespace OroUostoSystem.Server.Utility
             {
                 _logger.LogError(ex, "❌ Database error in reminder service");
             }
+        }
+        
+        private async Task<(int remindersToSend, int emailsSent)> SendReminderToPilotAsync(
+            Flight flight, 
+            Pilot pilot, 
+            string pilotRole, 
+            string destination)
+        {
+            int remindersToSend = 0;
+            int emailsSent = 0;
+            
+            var userEmail = pilot.User?.Email;
+            var userName = pilot.User != null 
+                ? $"{pilot.User.FirstName} {pilot.User.LastName}"
+                : "Unknown Pilot";
+            
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                _logger.LogWarning($"⚠️ Flight {flight.FlightNumber}: {pilotRole} has no email!");
+                return (remindersToSend, emailsSent);
+            }
+            
+            remindersToSend++;
+            
+            var now = DateTime.UtcNow;
+            var hoursUntilFlight = (flight.FlightDate - now).TotalHours;
+            
+            _logger.LogInformation($"📧 REMINDER NEEDED for flight {flight.FlightNumber}");
+            _logger.LogInformation($"   Aircraft: {flight.Aircraft}");
+            _logger.LogInformation($"   Date: {flight.FlightDate:yyyy-MM-dd HH:mm}");
+            _logger.LogInformation($"   Hours until: {hoursUntilFlight:F1}h");
+            _logger.LogInformation($"   {pilotRole}: {userName} ({userEmail})");
+            _logger.LogInformation($"   Status: {flight.Status}");
+            _logger.LogInformation($"   Destination: {destination}");
+            
+            try
+            {
+                var emailSent = await _emailService.SendFlightReminderAsync(
+                    userEmail,
+                    userName,
+                    flight.FlightNumber,
+                    flight.Aircraft,
+                    flight.FlightDate,
+                    destination
+                );
+                
+                if (emailSent)
+                {
+                    emailsSent++;
+                    _logger.LogInformation($"✅ Email sent to {pilotRole} for flight {flight.FlightNumber}");
+                }
+                else
+                {
+                    _logger.LogWarning($"❌ Failed to send email to {pilotRole} for flight {flight.FlightNumber}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"💥 Error sending email to {pilotRole} for flight {flight.FlightNumber}");
+            }
+            
+            return (remindersToSend, emailsSent);
         }
     }
 }
