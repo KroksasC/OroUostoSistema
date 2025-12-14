@@ -63,7 +63,7 @@ namespace OroUostoSystem.Server.Utility
                         .ThenInclude(p => p.User)                    // Include User from Main Pilot
                     .Include(f => f.AssignedPilotNavigation)         // Include Co-Pilot
                         .ThenInclude(p => p.User)                    // Include User from Co-Pilot
-                    .Include(f => f.Routes)                          // Include Routes for destination
+                    .Include(f => f.Route)                          // Include Routes for destination
                     .Where(f => (f.AssignedMainPilot != null || f.AssignedPilot != null) && // Has at least one pilot
                                f.FlightDate > now &&                 // Future flight
                                f.Status != "Completed" && 
@@ -83,8 +83,7 @@ namespace OroUostoSystem.Server.Utility
                     // Check if flight is within 24 hours
                     if (hoursUntilFlight <= 24 && hoursUntilFlight > 0)
                     {
-                        // Get destination from Routes if available
-                        var destination = flight.Routes.FirstOrDefault()?.LandingAirport ?? "Unknown";
+                        var destination = flight.Route?.LandingAirport ?? "Unknown";
                         
                         // Send reminder to MAIN PILOT if assigned
                         if (flight.AssignedMainPilotNavigation != null && 
@@ -135,7 +134,7 @@ namespace OroUostoSystem.Server.Utility
                         var coPilotName = flight.AssignedPilotNavigation?.User != null 
                             ? $"{flight.AssignedPilotNavigation.User.FirstName} {flight.AssignedPilotNavigation.User.LastName}"
                             : "No co-pilot";
-                        var destination = flight.Routes.FirstOrDefault()?.LandingAirport ?? "Unknown";
+                        var destination = flight.Route?.LandingAirport ?? "Unknown";
                         
                         _logger.LogInformation($"   {flight.FlightNumber}: {flight.Aircraft} to {destination} in {hours:F1}h");
                         _logger.LogInformation($"      Main: {mainPilotName}");

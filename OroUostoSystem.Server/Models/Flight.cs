@@ -15,10 +15,12 @@
     public string FlightNumber { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
 
+    public Route Route { get; set; } = null!;
+    public int RouteId { get; set; }
+
     // NEW: Repeat interval in hours (NULL = one-time flight)
     public int? RepeatIntervalHours { get; set; }
 
     // Navigation
     public ICollection<Baggage> Baggages { get; set; } = new List<Baggage>();
-    public ICollection<Route> Routes { get; set; } = new List<Route>();
 }

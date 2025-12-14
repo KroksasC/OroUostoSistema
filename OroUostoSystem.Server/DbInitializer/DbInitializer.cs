@@ -48,32 +48,32 @@ namespace OroUostoSystem.Server.DbInitializer
                 await CreateUserWithRole("pilot@gmail.com", "Pilot123!", Helper.Pilot);
                 await CreateUserWithRole("client@gmail.com", "Client123!", Helper.Client);
                 await CreateUserWithRole("worker@gmail.com", "Worker123!", Helper.Worker);
+
+                var admin = await _userManager.FindByEmailAsync("admin@gmail.com");
+                admin.FirstName = "System";
+                admin.LastName = "Administrator";
+                await _userManager.UpdateAsync(admin);
+
+                var regUser = await _userManager.FindByEmailAsync("user@gmail.com");
+                regUser.FirstName = "Regular";
+                regUser.LastName = "User";
+                await _userManager.UpdateAsync(regUser);
+
+                var pilot = await _userManager.FindByEmailAsync("pilot@gmail.com");
+                pilot.FirstName = "John";
+                pilot.LastName = "Eagle";
+                await _userManager.UpdateAsync(pilot);
+
+                var clientt = await _userManager.FindByEmailAsync("client@gmail.com");
+                clientt.FirstName = "Maria";
+                clientt.LastName = "Kowalski";
+                await _userManager.UpdateAsync(clientt);
+
+                var worker = await _userManager.FindByEmailAsync("worker@gmail.com");
+                worker.FirstName = "David";
+                worker.LastName = "Clark";
+                await _userManager.UpdateAsync(worker);
             }
-            var admin = await _userManager.FindByEmailAsync("admin@gmail.com");
-            admin.FirstName = "System";
-            admin.LastName = "Administrator";
-            await _userManager.UpdateAsync(admin);
-
-            var regUser = await _userManager.FindByEmailAsync("user@gmail.com");
-            regUser.FirstName = "Regular";
-            regUser.LastName = "User";
-            await _userManager.UpdateAsync(regUser);
-
-            var pilot = await _userManager.FindByEmailAsync("pilot@gmail.com");
-            pilot.FirstName = "John";
-            pilot.LastName = "Eagle";
-            await _userManager.UpdateAsync(pilot);
-
-            var clientt = await _userManager.FindByEmailAsync("client@gmail.com");
-            clientt.FirstName = "Maria";
-            clientt.LastName = "Kowalski";
-            await _userManager.UpdateAsync(clientt);
-
-            var worker = await _userManager.FindByEmailAsync("worker@gmail.com");
-            worker.FirstName = "David";
-            worker.LastName = "Clark";
-            await _userManager.UpdateAsync(worker);
-
 
             // ==========================================
             //  SEED CLIENTS
@@ -115,11 +115,29 @@ namespace OroUostoSystem.Server.DbInitializer
                 await _context.SaveChangesAsync();
             }
             // ==========================================
+            //  SEED PILOTS
+            // ==========================================
+            if (!_context.Pilots.Any())
+            {
+                var pilotUser = await _userManager.FindByEmailAsync("pilot@gmail.com");
+
+                var pilot = new Pilot
+                {
+                    UserId = pilotUser.Id,
+                    DaysOff = DateTime.Now.AddDays(30),
+                    VacationStart = DateTime.Now.AddMonths(2),
+                    VacationEnd = DateTime.Now.AddMonths(2).AddDays(14),
+                    MissingWorkHours = 0
+                };
+
+                _context.Pilots.Add(pilot);
+                await _context.SaveChangesAsync();
+            }
+            // ==========================================
             //  SEED SERVICES
             // ==========================================
             if (!_context.Services.Any())
             {
-                // Get any existing employee to assign
                 var employee = _context.Employees.FirstOrDefault();
 
                 if (employee != null)
@@ -137,6 +155,89 @@ namespace OroUostoSystem.Server.DbInitializer
                     await _context.SaveChangesAsync();
                 }
             }
+            // ==========================================
+            //  SEED ROUTES
+            // ==========================================
+            if (!_context.Routes.Any())
+            {
+                var routes = new List<Route>
+                {
+                    new(){
+                        TakeoffAirport = "KUN",
+                        LandingAirport = "VNO",
+                        Distance = 5540,
+                        Duration = 7.08,
+                        Altitude = 10.7
+                    },
+                    new(){
+                        TakeoffAirport = "KUN",
+                        LandingAirport = "PLQ",
+                        Distance = 8770,
+                        Duration = 11.5,
+                        Altitude = 11.0
+                    },
+                    new(){
+                        TakeoffAirport = "JFK",
+                        LandingAirport = "LAX",
+                        Distance = 3983,
+                        Duration = 5.5,
+                        Altitude = 11.3
+                    },
+                    new(){
+                        TakeoffAirport = "ORD",
+                        LandingAirport = "MIA",
+                        Distance = 1882,
+                        Duration = 3.2,
+                        Altitude = 10.5
+                    },
+                    new(){
+                        TakeoffAirport = "DFW",
+                        LandingAirport = "SEA",
+                        Distance = 2794,
+                        Duration = 4.1,
+                        Altitude = 10.8
+                    },
+                    new(){
+                        TakeoffAirport = "ATL",
+                        LandingAirport = "DEN",
+                        Distance = 1862,
+                        Duration = 3.5,
+                        Altitude = 10.9
+                    },
+                    new(){
+                        TakeoffAirport = "BOS",
+                        LandingAirport = "SFO",
+                        Distance = 4341,
+                        Duration = 6.2,
+                        Altitude = 11.2
+                    },
+                    new(){
+                        TakeoffAirport = "PHX",
+                        LandingAirport = "MSP",
+                        Distance = 2043,
+                        Duration = 3.3,
+                        Altitude = 10.6
+                    },
+                    new(){
+                        TakeoffAirport = "LAS",
+                        LandingAirport = "MCO",
+                        Distance = 3236,
+                        Duration = 4.8,
+                        Altitude = 10.7
+                    },
+                    new(){
+                        TakeoffAirport = "PDX",
+                        LandingAirport = "IAH",
+                        Distance = 3054,
+                        Duration = 4.5,
+                        Altitude = 11.1
+                    }
+                };
+
+                _context.Routes.AddRange(routes);
+                await _context.SaveChangesAsync();
+            }
+
             // ==========================================
             //  SEED SERVICE ORDERS
             // ==========================================
@@ -175,39 +276,49 @@ namespace OroUostoSystem.Server.DbInitializer
             // ==========================================
             if (!_context.Flights.Any())
             {
-                var flights = new List<Flight>
+                var pilots = _context.Pilots.ToList();
+                var pilotId = pilots.FirstOrDefault()?.Id;
+                
+                var routes = _context.Routes.ToList();
+                if (routes.Count >= 3)
                 {
-                    new(){
-                        AssignedPilot = null,
-                        AssignedMainPilot = 2,
-                        WorkingHours = 3.5f,
-                        FlightDate = DateTime.Now.AddDays(-1),
-                        Aircraft = "Airbus A320",
-                        FlightNumber = "FL1001",
-                        Status = "Arrived"
-                    },
-                    new(){
-                        AssignedPilot = 2,
-                        AssignedMainPilot = null,
-                        WorkingHours = 2.2f,
-                        FlightDate = DateTime.Now,
-                        Aircraft = "Boeing 737",
-                        FlightNumber = "FL2002",
-                        Status = "Boarding"
-                    },
-                    new(){
-                        AssignedPilot = 2,
-                        AssignedMainPilot = 1,
-                        WorkingHours = 4.1f,
-                        FlightDate = DateTime.Now.AddDays(1),
-                        Aircraft = "Embraer 190",
-                        FlightNumber = "FL3003",
-                        Status = "Scheduled"
-                    }
-                };
+                    var flights = new List<Flight>
+                    {
+                        new(){
+                            RouteId = routes[0].Id,
+                            AssignedPilot = null,
+                            AssignedMainPilot = pilotId,
+                            WorkingHours = 3.5f,
+                            FlightDate = DateTime.Now.AddDays(-1),
+                            Aircraft = "Airbus A320",
+                            FlightNumber = "FL1001",
+                            Status = "Arrived"
+                        },
+                        new(){
+                            RouteId = routes[1].Id,
+                            AssignedPilot = pilotId,
+                            AssignedMainPilot = null,
+                            WorkingHours = 2.2f,
+                            FlightDate = DateTime.Now,
+                            Aircraft = "Boeing 737",
+                            FlightNumber = "FL2002",
+                            Status = "Boarding"
+                        },
+                        new(){
+                            RouteId = routes[2].Id,
+                            AssignedPilot = null,
+                            AssignedMainPilot = null,
+                            WorkingHours = 4.1f,
+                            FlightDate = DateTime.Now.AddDays(1),
+                            Aircraft = "Embraer 190",
+                            FlightNumber = "FL3003",
+                            Status = "Scheduled"
+                        }
+                    };
 
-                _context.Flights.AddRange(flights);
-                await _context.SaveChangesAsync();
+                    _context.Flights.AddRange(flights);
+                    await _context.SaveChangesAsync();
+                }
             }
 
 
@@ -302,7 +413,7 @@ namespace OroUostoSystem.Server.DbInitializer
                     {
                         BaggageId = bag.Id,
                         UpdatedAt = DateTime.Now.AddMinutes(-random.Next(10, 600)),
-                        Latitude = 40 + random.NextDouble() * 20,     // approx Europe
+                        Latitude = 40 + random.NextDouble() * 20,
                         Longitude = -5 + random.NextDouble() * 15
                     });
                 }
@@ -310,12 +421,8 @@ namespace OroUostoSystem.Server.DbInitializer
                 _context.BaggageTrackings.AddRange(tracking);
                 await _context.SaveChangesAsync();
             }
-
         }
 
-        // =====================================================
-        //  HELPER FOR USER CREATION + ROLE ASSIGNMENT
-        // =====================================================
         private async Task CreateUserWithRole(string email, string password, string role)
         {
             var user = new User
@@ -326,7 +433,7 @@ namespace OroUostoSystem.Server.DbInitializer
             };
 
             await _userManager.CreateAsync(user, password);
-            await _context.SaveChangesAsync();    // IMPORTANT for SQLite
+            await _context.SaveChangesAsync();
             await _userManager.AddToRoleAsync(user, role);
         }
     }

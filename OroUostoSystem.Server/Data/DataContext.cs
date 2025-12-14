@@ -76,10 +76,10 @@ namespace OroUostoSystem.Server.Data
             //  Flight ↔ Routes (many : 1)
             // -----------------------------
             builder.Entity<Flight>()
-                .HasOne(r => r.Route)
-                .WithMany(f => f.Flights)
-                .HasForeignKey(r => r.RouteId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasOne(f => f.Route)
+                .WithMany(r => r.Flights)
+                .HasForeignKey(f => f.RouteId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // -----------------------------
             //  WeatherForecast ↔ Route (many : 1)

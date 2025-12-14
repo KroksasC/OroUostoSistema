@@ -54,9 +54,6 @@ namespace OroUostoSystem.Server
 
             var app = builder.Build();
 
-            // -----------------------------
-            // Run DB initializer correctly
-            // -----------------------------
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
@@ -73,11 +70,11 @@ namespace OroUostoSystem.Server
                 }
             }
 
-            // -----------------------------
-            // Middleware
-            // -----------------------------
-            app.UseDefaultFiles();
-            app.UseStaticFiles();
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
 
             app.UseCors(cors =>
                 cors.AllowAnyHeader()
@@ -104,25 +101,13 @@ namespace OroUostoSystem.Server
                 Console.WriteLine($"=== END REQUEST DEBUG ===");
             });
 
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
 
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
-
-            // COMMENT OUT this code - BackgroundService will start automatically
-            // var reminderService = app.Services.GetRequiredService<IReminderService>();
-            // _ = Task.Run(async () => 
-            // {
-            //     await Task.Delay(2000); // Wait 2 seconds for app to start
-            //     Console.WriteLine("🚀 Starting initial reminder check...");
-            //     await reminderService.CheckAndSendRemindersAsync();
-            // });
 
             app.Run();
         }

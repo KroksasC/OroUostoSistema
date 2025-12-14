@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace OroUostoSystem.Server.Migrations
 {
-    /// <inheritdoc />asdf
+    /// <inheritdoc />
     public partial class InitialTest : Migration
     {
         /// <inheritdoc />

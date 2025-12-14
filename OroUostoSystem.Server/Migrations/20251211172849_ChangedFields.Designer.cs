@@ -14,7 +14,7 @@ namespace OroUostoSystem.Server.Migrations
     [Migration("20251211172849_ChangedFields")]
     partial class ChangedFields
     {
-        /// <inheritdoc />asdf
+        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
@@ -172,6 +172,9 @@ namespace OroUostoSystem.Server.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PilotId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -181,6 +184,7 @@ namespace OroUostoSystem.Server.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PilotId");
 
                     b.ToTable("Flights");
                 });
@@ -604,6 +608,7 @@ namespace OroUostoSystem.Server.Migrations
                 {
                     b.HasOne("Pilot", "Pilot")
                         .WithMany("Flights")
+                        .HasForeignKey("PilotId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Pilot");

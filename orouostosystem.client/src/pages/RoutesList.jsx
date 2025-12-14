@@ -1,16 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import RouteEditModal from '../components/RouteEditModal'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 export default function RoutesList() {
-  const routes = [
-    { id: '1', source: 'KUN', destination: 'VNO', distance: 5540, duration: '7h 5m', altitude: 35000, forecast: { humidity: 60, temperature: 12, createdAt: '2025-11-01', pressure: 1015, windSpeed: 25 } },
-    { id: '2', source: 'KUN', destination: 'PLQ', distance: 8770, duration: '11h 30m', altitude: 36000, forecast: { humidity: 55, temperature: 18, createdAt: '2025-11-02', pressure: 1012, windSpeed: 30 } }
-  ]
+  const [routes, setRoutes] = useState([])
   const [editingRoute, setEditingRoute] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [role, setRole] = useState([])
   const navigate = useNavigate()
+
+  // Load roles
+  useEffect(() => {
+    const storedRole = JSON.parse(localStorage.getItem("role")) ?? []
+    setRole(storedRole)
+  }, [])
+
+  const hasRole = (r) => role.includes(r)
+  const isWorker = hasRole("Worker")
+  const isPilot = hasRole("Pilot")
+
+  // Load routes from API
+  const loadRoutes = async () => {
+    try {
+      const res = await fetch('/api/routes')
+      const data = await res.json()
+      setRoutes(data)
+    } catch (error) {
+      console.error('Failed to load routes:', error)
+    }
+  }
+
+  useEffect(() => {
+    loadRoutes()
+  }, [])
 
   const openEditModal = (route) => {
     setEditingRoute(route)
@@ -20,6 +43,38 @@ export default function RoutesList() {
   const closeModal = () => {
     setIsModalOpen(false)
     setEditingRoute(null)
+  }
+
+  const handleSave = () => {
+    loadRoutes()
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this route?')) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/routes/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (res.ok) {
+        setRoutes(routes.filter(r => r.id !== id))
+        alert('Route deleted successfully')
+      } else {
+        alert('Failed to delete route')
+      }
+    } catch (error) {
+      console.error('Failed to delete route:', error)
+      alert('Failed to delete route')
+    }
+  }
+
+  const formatDuration = (hours) => {
+    const h = Math.floor(hours)
+    const m = Math.round((hours - h) * 60)
+    return `${h}h ${m}m`
   }
 
   return (
@@ -33,32 +88,49 @@ export default function RoutesList() {
             <th>Destination</th>
             <th>Distance (km)</th>
             <th>Duration</th>
-            <th>Altitude</th>
+            <th>Altitude (km)</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {routes.map(route => (
-            <tr key={route.id}>
-              <td>{route.id}</td>
-              <td>{route.source}</td>
-              <td>{route.destination}</td>
-              <td>{route.distance}</td>
-              <td>{route.duration}</td>
-              <td>{route.altitude}</td>
-              <td>
-                <button className="btn btn-primary btn-sm me-2" onClick={() => openEditModal(route)}>Details</button>
-                <button className="btn btn-danger btn-sm">Delete</button>
+          {routes.length === 0 ? (
+            <tr>
+              <td colSpan="7" className="text-center text-muted">
+                No routes found.
               </td>
             </tr>
-          ))}
+          ) : (
+            routes.map(route => (
+              <tr key={route.id}>
+                <td>{route.id}</td>
+                <td>{route.takeoffAirport}</td>
+                <td>{route.landingAirport}</td>
+                <td>{route.distance}</td>
+                <td>{formatDuration(route.duration)}</td>
+                <td>{route.altitude}</td>
+                <td>
+                  {(isWorker || isPilot) && (
+                    <button className="btn btn-primary btn-sm me-2" onClick={() => openEditModal(route)}>Details</button>
+                  )}
+                  {isWorker && (
+                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(route.id)}>Delete</button>
+                  )}
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
       <div className="text-center mt-4">
         <button className="btn btn-secondary" onClick={() => navigate('/')}>Back</button>
       </div>
       {isModalOpen && editingRoute && (
-        <RouteEditModal isOpen={isModalOpen} onClose={closeModal} route={editingRoute} />
+        <RouteEditModal 
+          isOpen={isModalOpen} 
+          onClose={closeModal} 
+          route={editingRoute}
+          onSave={handleSave}
+        />
       )}
     </div>
   )

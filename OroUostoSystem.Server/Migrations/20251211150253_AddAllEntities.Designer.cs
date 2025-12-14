@@ -173,6 +173,8 @@ namespace OroUostoSystem.Server.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PilotId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -182,6 +184,8 @@ namespace OroUostoSystem.Server.Migrations
                         .HasColumnType("REAL");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PilotId");
 
                     b.ToTable("Flights");
                 });
@@ -490,7 +494,7 @@ namespace OroUostoSystem.Server.Migrations
 
                     b.ToTable("Services");
                 });
-//asdf
+
             modelBuilder.Entity("ServiceOrder", b =>
                 {
                     b.Property<int>("Id")
@@ -605,6 +609,7 @@ namespace OroUostoSystem.Server.Migrations
                 {
                     b.HasOne("Pilot", "Pilot")
                         .WithMany("Flights")
+                        .HasForeignKey("PilotId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Pilot");
