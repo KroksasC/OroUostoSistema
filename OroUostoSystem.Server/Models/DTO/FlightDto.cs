@@ -17,6 +17,5 @@ namespace OroUostoSystem.Server.Models.DTO
         public double HoursUntil { get; set; }
         public bool IsSoon { get; set; }
         public string Destination { get; set; } = "";
-        public int RoutesCount { get; set; }
     }
 }
