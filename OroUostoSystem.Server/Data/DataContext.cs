@@ -79,7 +79,7 @@ namespace OroUostoSystem.Server.Data
                 .HasOne(f => f.Route)
                 .WithMany(r => r.Flights)
                 .HasForeignKey(f => f.RouteId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
             // -----------------------------
             //  WeatherForecast ↔ Route (many : 1)

@@ -183,36 +183,55 @@ namespace OroUostoSystem.Server.DbInitializer
             // ==========================================
             //  SEED FLIGHTS
             // ==========================================
+            if (!_context.Routes.Any())
+            {
+                _context.Routes.Add(new Route
+                {
+                    TakeoffAirport = "VNO",
+                    LandingAirport = "LHR",
+                    Distance = 1600,
+                    Duration = 2.5,
+                    Altitude = 11000
+                });
+
+                await _context.SaveChangesAsync();
+            }
+
             if (!_context.Flights.Any())
             {
+                var route = _context.Routes.First();
+
                 var flights = new List<Flight>
                 {
                     new(){
-                        AssignedPilot = 2,
-                        AssignedMainPilot = 1,
+                        AssignedPilot = null,
+                        AssignedMainPilot = null,
                         WorkingHours = 3.5f,
                         FlightDate = DateTime.Now.AddDays(-1),
                         Aircraft = "Airbus A320",
                         FlightNumber = "FL1001",
-                        Status = "Arrived"
+                        Status = "Arrived",
+                        RouteId = route.Id
                     },
                     new(){
-                        AssignedPilot = 2,
-                        AssignedMainPilot = 1,
+                        AssignedPilot = null,
+                        AssignedMainPilot = null,
                         WorkingHours = 2.2f,
                         FlightDate = DateTime.Now,
                         Aircraft = "Boeing 737",
                         FlightNumber = "FL2002",
-                        Status = "Boarding"
+                        Status = "Boarding",
+                        RouteId = route.Id
                     },
                     new(){
-                        AssignedPilot = 1,
-                        AssignedMainPilot = 2,
+                        AssignedPilot = null,
+                        AssignedMainPilot = null,
                         WorkingHours = 4.1f,
                         FlightDate = DateTime.Now.AddDays(1),
                         Aircraft = "Embraer 190",
                         FlightNumber = "FL3003",
-                        Status = "Scheduled"
+                        Status = "Scheduled",
+                        RouteId = route.Id
                     }
                 };
 
