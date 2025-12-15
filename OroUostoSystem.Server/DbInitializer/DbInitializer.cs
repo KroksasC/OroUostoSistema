@@ -232,10 +232,10 @@ namespace OroUostoSystem.Server.DbInitializer
                         AssignedPilot = 1,
                         AssignedMainPilot = null,
                         WorkingHours = 3.5f,
-                        FlightDate = DateTime.Now.AddDays(-1),
+                        FlightDate = DateTime.Now.AddDays(2),
                         Aircraft = "Airbus A320",
                         FlightNumber = "FL1001",
-                        Status = "Arrived",
+                        Status = "Preparing",
                         RouteId = route.Id
                     },
                     new(){
