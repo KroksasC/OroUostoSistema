@@ -1,4 +1,4 @@
-﻿﻿public class Flight
+﻿public class Flight
 {
     public int Id { get; set; }
 
@@ -14,8 +14,8 @@
     public string Aircraft { get; set; } = string.Empty;
     public string FlightNumber { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
-    public Route Route { get; set; } 
-    
+
+    public Route Route { get; set; } = null!;
     public int RouteId { get; set; }
 
     // NEW: Repeat interval in hours (NULL = one-time flight)
@@ -23,5 +23,4 @@
 
     // Navigation
     public ICollection<Baggage> Baggages { get; set; } = new List<Baggage>();
-    public ICollection<Route> Routes { get; set; } = new List<Route>();
 }

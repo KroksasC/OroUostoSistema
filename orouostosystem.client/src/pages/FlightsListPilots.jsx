@@ -36,7 +36,7 @@ export default function FlightsListPilots() {
         const data = await response.json();
         setPilotProfileId(data.id);
         await loadFlights(data.id);
-        await loadRecommendedFlights();
+        await loadRecommendedFlights(data.id);
       } else {
         console.warn("No pilot profile found");
         alert("Pilot profile not found. Please contact administrator.");
@@ -62,18 +62,33 @@ export default function FlightsListPilots() {
     }
   };
 
-  const loadRecommendedFlights = async () => {
-    try {
-      const response = await fetch(`/api/flight/unassigned`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setRecommendedFlights(data.flights || []);
-      }
-    } catch (error) {
-      console.error("Error loading recommended flights:", error);
+const loadRecommendedFlights = async (pilotId) => {
+  try {
+    if (!pilotId) {
+      console.warn("No pilotId provided");
+      setRecommendedFlights([]);
+      return;
     }
-  };
+    
+    console.log(`Fetching recommended flights for pilot: ${pilotId}`);
+    const response = await fetch(`/api/flight/unassigned/${pilotId}`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log(`Received ${data.flights?.length || 0} recommended flights`);
+      setRecommendedFlights(data.flights || []);
+    } else if (response.status === 404) {
+      console.error("Pilot not found or no flights available");
+      setRecommendedFlights([]);
+    } else {
+      console.error("Failed to load recommended flights");
+      setRecommendedFlights([]);
+    }
+  } catch (error) {
+    console.error("Error loading recommended flights:", error);
+    setRecommendedFlights([]);
+  }
+};
 
   const handleAcceptFlight = async (flight) => {
     if (!confirm(`Accept flight ${flight.flightId}?`)) return;

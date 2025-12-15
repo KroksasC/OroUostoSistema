@@ -114,37 +114,85 @@ namespace OroUostoSystem.Server.Controllers
             }
         }
 
-        [HttpGet("unassigned")]
-        public async Task<IActionResult> GetUnassignedFlights()
-        {
-            try
+[HttpGet("unassigned/{pilotId}")] // Add {pilotId} to the route
+public async Task<IActionResult> GetUnassignedFlights(int pilotId)
+{
+    try
+    {
+        // Get pilot's missing work hours AND vacation dates
+        var pilot = await _context.Pilots.FindAsync(pilotId);
+        if (pilot == null)
+            return NotFound("Pilot not found");
+        
+        var missingWorkHours = pilot.MissingWorkHours;
+        var vacationStart = pilot.VacationStart; // DateTime, not DateTime?
+        var vacationEnd = pilot.VacationEnd;     // DateTime, not DateTime?
+        
+        // Check if pilot has vacation scheduled (check for default/min date)
+        bool hasVacationScheduled = vacationStart > DateTime.MinValue 
+            && vacationEnd > DateTime.MinValue 
+            && vacationStart <= vacationEnd;
+        
+        // Check if pilot is currently on vacation
+        bool isOnVacation = hasVacationScheduled
+            && DateTime.UtcNow >= vacationStart 
+            && DateTime.UtcNow <= vacationEnd;
+        
+        // Get all unassigned flights
+        var unassignedFlights = await _context.Flights
+            .Where(f => f.AssignedPilot == null || f.AssignedMainPilot == null)
+            .Select(f => new
             {
-                var flights = await _context.Flights
-                    .Include(f => f.Route)
-                    .Where(f => f.AssignedPilot == null && f.AssignedMainPilot == null)
-                    .Select(f => new
-                    {
-                        id = f.Id,
-                        flightId = f.FlightNumber,
-                        destination = f.Route != null ? f.Route.LandingAirport : "No Destination",
-                        startingAirport = f.Route != null ? f.Route.TakeoffAirport : "TBD",
-                        takeOffTime = f.FlightDate,
-                        planeName = f.Aircraft,
-                        status = f.Status,
-                        isSoon = (f.FlightDate - DateTime.UtcNow).TotalHours < 24,
-                        hoursUntil = (f.FlightDate - DateTime.UtcNow).TotalHours,
-                        pilotName = "Not Assigned"
-                    })
-                    .ToListAsync();
-
-                return Ok(new { success = true, count = flights.Count, flights });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting unassigned flights");
-                return StatusCode(500, new { success = false, error = ex.Message });
-            }
-        }
+                id = f.Id,
+                flightId = f.FlightNumber,
+                destination = f.Route != null ? f.Route.LandingAirport : "No Destination",
+                startingAirport = f.Route != null ? f.Route.TakeoffAirport : "TBD",
+                takeOffTime = f.FlightDate,
+                planeName = f.Aircraft,
+                status = f.Status,
+                isSoon = (f.FlightDate - DateTime.UtcNow).TotalHours < 24,
+                hoursUntil = (f.FlightDate - DateTime.UtcNow).TotalHours,
+                pilotName = "Not Assigned",
+                workingHours = f.WorkingHours
+            })
+            .ToListAsync();
+        
+        // Filter flights: 
+        // 1. Show flights that would help reduce missing hours
+        // 2. EXCLUDE flights that occur during pilot's vacation
+        var recommendedFlights = unassignedFlights
+            .Where(f => f.workingHours < missingWorkHours) // Helps fill missing hours
+            .Where(f => {
+                // Check if pilot has a vacation scheduled
+                if (!hasVacationScheduled)
+                    return true; // No vacation scheduled
+                
+                // Check if flight date overlaps with vacation period
+                bool flightDuringVacation = f.takeOffTime >= vacationStart 
+                    && f.takeOffTime <= vacationEnd;
+                
+                return !flightDuringVacation; // Exclude if during vacation
+            })
+            .ToList();
+        
+        return Ok(new { 
+            success = true, 
+            count = recommendedFlights.Count, 
+            flights = recommendedFlights,
+            pilotMissingHours = missingWorkHours,
+            isOnVacation = isOnVacation,
+            hasVacationScheduled = hasVacationScheduled,
+            vacationPeriod = hasVacationScheduled ? 
+                $"{vacationStart:yyyy-MM-dd} to {vacationEnd:yyyy-MM-dd}" : "No vacation scheduled",
+            note = $"Showing flights with less than {missingWorkHours} hours, excluding vacation periods"
+        });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error getting unassigned flights");
+        return StatusCode(500, new { success = false, error = ex.Message });
+    }
+}
 
         [HttpPost("accept/{flightId}")]
         public async Task<IActionResult> AcceptFlight(int flightId, [FromBody] AcceptFlightRequest request)
@@ -205,7 +253,7 @@ namespace OroUostoSystem.Server.Controllers
             try
             {
                 var flight = await _context.Flights
-                    .Include(f => f.Routes)
+                    .Include(f => f.Route)
                     .FirstOrDefaultAsync(f => f.Id == flightId);
 
                 if (flight == null)
@@ -293,7 +341,7 @@ namespace OroUostoSystem.Server.Controllers
     public class UpdateFlightRequest
     {
         public string? Aircraft { get; set; }
-        public double? StartingAirport { get; set; }
+        public string? StartingAirport { get; set; }
     }
 
     public class DeclineFlightRequest
