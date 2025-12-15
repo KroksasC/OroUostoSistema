@@ -197,6 +197,31 @@ namespace OroUostoSystem.Server.DbInitializer
                 await _context.SaveChangesAsync();
             }
 
+            if (!_context.Pilots.Any())
+            {
+
+                var pilotUser = await _userManager.FindByEmailAsync("pilot@gmail.com");
+                string userId = pilotUser.Id;
+                var existingPilot = await _context.Pilots
+                        .FirstOrDefaultAsync(p => p.UserId == userId);
+
+
+                var PilotList = new List<Pilot>
+                {
+                    new()
+                    {
+                        DaysOff = DateTime.Today,
+                        VacationStart = DateTime.Today,
+                        VacationEnd = DateTime.Today.AddDays(7),
+                        MissingWorkHours = 3,
+                        UserId = userId
+                    }
+                };
+
+                await _context.Pilots.AddRangeAsync(PilotList);
+                await _context.SaveChangesAsync();
+            }
+
             if (!_context.Flights.Any())
             {
                 var route = _context.Routes.First();
@@ -204,7 +229,7 @@ namespace OroUostoSystem.Server.DbInitializer
                 var flights = new List<Flight>
                 {
                     new(){
-                        AssignedPilot = null,
+                        AssignedPilot = 1,
                         AssignedMainPilot = null,
                         WorkingHours = 3.5f,
                         FlightDate = DateTime.Now.AddDays(-1),
@@ -215,7 +240,7 @@ namespace OroUostoSystem.Server.DbInitializer
                     },
                     new(){
                         AssignedPilot = null,
-                        AssignedMainPilot = null,
+                        AssignedMainPilot = 1,
                         WorkingHours = 2.2f,
                         FlightDate = DateTime.Now,
                         Aircraft = "Boeing 737",
@@ -227,11 +252,43 @@ namespace OroUostoSystem.Server.DbInitializer
                         AssignedPilot = null,
                         AssignedMainPilot = null,
                         WorkingHours = 4.1f,
-                        FlightDate = DateTime.Now.AddDays(1),
+                        FlightDate = DateTime.Now.AddDays(30),
                         Aircraft = "Embraer 190",
                         FlightNumber = "FL3003",
                         Status = "Scheduled",
                         RouteId = route.Id
+                    },
+                    new(){
+                        AssignedPilot = null,
+                        AssignedMainPilot = null,
+                        WorkingHours = 2,
+                        FlightDate = DateTime.Now.AddDays(1),
+                        Aircraft = "plane 190",
+                        FlightNumber = "FL4004",
+                        Status = "Scheduled",
+                        RouteId = route.Id
+                    },
+                    new(){
+                        AssignedPilot = 1,
+                        AssignedMainPilot = null,
+                        WorkingHours = 2,
+                        FlightDate = DateTime.Now.AddDays(1),
+                        Aircraft = "plane 200",
+                        FlightNumber = "FL5005",
+                        Status = "Scheduled",
+                        RouteId = route.Id,
+                        RepeatIntervalHours = 168
+                    },
+                    new(){
+                        AssignedPilot = null,
+                        AssignedMainPilot = null,
+                        WorkingHours = 2,
+                        FlightDate = DateTime.Now.AddDays(30),
+                        Aircraft = "A very good plane 200",
+                        FlightNumber = "FL6006",
+                        Status = "Scheduled",
+                        RouteId = route.Id,
+                        RepeatIntervalHours = 168
                     }
                 };
 
@@ -315,8 +372,6 @@ namespace OroUostoSystem.Server.DbInitializer
                 _context.Baggages.AddRange(baggageList);
                 await _context.SaveChangesAsync();
             }
-
-
 
             // ==========================================
             //  SEED BAGGAGE TRACKING (1:1)
