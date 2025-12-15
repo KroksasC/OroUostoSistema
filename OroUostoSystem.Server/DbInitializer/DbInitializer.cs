@@ -50,50 +50,57 @@ namespace OroUostoSystem.Server.DbInitializer
                 await CreateUserWithRole("worker@gmail.com", "Worker123!", Helper.Worker);
             }
             var admin = await _userManager.FindByEmailAsync("admin@gmail.com");
-            admin.FirstName = "System";
-            admin.LastName = "Administrator";
+            admin.FirstName = "Admin";
+            admin.LastName = "Admin";
             await _userManager.UpdateAsync(admin);
 
             var regUser = await _userManager.FindByEmailAsync("user@gmail.com");
-            regUser.FirstName = "Regular";
+            regUser.FirstName = "User";
             regUser.LastName = "User";
             await _userManager.UpdateAsync(regUser);
 
             var pilot = await _userManager.FindByEmailAsync("pilot@gmail.com");
-            pilot.FirstName = "John";
-            pilot.LastName = "Eagle";
+            pilot.FirstName = "Pilot";
+            pilot.LastName = "Pilot";
             await _userManager.UpdateAsync(pilot);
 
             var clientt = await _userManager.FindByEmailAsync("client@gmail.com");
-            clientt.FirstName = "Maria";
-            clientt.LastName = "Kowalski";
+            clientt.FirstName = "Client";
+            clientt.LastName = "Client";
             await _userManager.UpdateAsync(clientt);
 
             var worker = await _userManager.FindByEmailAsync("worker@gmail.com");
-            worker.FirstName = "David";
-            worker.LastName = "Clark";
+            worker.FirstName = "Worker";
+            worker.LastName = "Worker";
             await _userManager.UpdateAsync(worker);
 
 
             // ==========================================
             //  SEED CLIENTS
             // ==========================================
-            if (!_context.Clients.Any())
+            var clientUsers = await _userManager.GetUsersInRoleAsync(Helper.Client);
+
+            foreach (var user in clientUsers)
             {
-                var clientUser = await _userManager.FindByEmailAsync("client@gmail.com");
+                var existingClient = await _context.Clients
+                    .FirstOrDefaultAsync(c => c.UserId == user.Id);
 
-                var client = new Client
+                if (existingClient == null)
                 {
-                    UserId = clientUser.Id,
-                    BirthDate = new DateTime(1990, 5, 10),
-                    LoyaltyLevel = "Silver",
-                    Points = 1200,
-                    RegistrationDate = DateTime.Now.AddYears(-1)
-                };
+                    var client = new Client
+                    {
+                        UserId = user.Id,
+                        BirthDate = new DateTime(1990, 1, 1),
+                        LoyaltyLevel = "Bronze",
+                        Points = 0,
+                        RegistrationDate = DateTime.Now.AddYears(-1)
+                    };
 
-                _context.Clients.Add(client);
-                await _context.SaveChangesAsync();
+                    _context.Clients.Add(client);
+                }
             }
+
+            await _context.SaveChangesAsync();
             // ==========================================
             //  SEED WORKER EMPLOYEE
             // ==========================================
@@ -142,7 +149,10 @@ namespace OroUostoSystem.Server.DbInitializer
             // ==========================================
             if (!_context.ServiceOrders.Any())
             {
-                var client = _context.Clients.FirstOrDefault();
+                var clientUser = await _userManager.FindByEmailAsync("client@gmail.com");
+                var client = await _context.Clients
+                    .FirstOrDefaultAsync(c => c.UserId == clientUser.Id);
+
                 var service = _context.Services.FirstOrDefault();
 
                 if (client != null && service != null)
@@ -178,8 +188,8 @@ namespace OroUostoSystem.Server.DbInitializer
                 var flights = new List<Flight>
                 {
                     new(){
-                        AssignedPilot = null,
-                        AssignedMainPilot = 2,
+                        AssignedPilot = 2,
+                        AssignedMainPilot = 1,
                         WorkingHours = 3.5f,
                         FlightDate = DateTime.Now.AddDays(-1),
                         Aircraft = "Airbus A320",
@@ -188,7 +198,7 @@ namespace OroUostoSystem.Server.DbInitializer
                     },
                     new(){
                         AssignedPilot = 2,
-                        AssignedMainPilot = null,
+                        AssignedMainPilot = 1,
                         WorkingHours = 2.2f,
                         FlightDate = DateTime.Now,
                         Aircraft = "Boeing 737",
@@ -196,8 +206,8 @@ namespace OroUostoSystem.Server.DbInitializer
                         Status = "Boarding"
                     },
                     new(){
-                        AssignedPilot = 2,
-                        AssignedMainPilot = 1,
+                        AssignedPilot = 1,
+                        AssignedMainPilot = 2,
                         WorkingHours = 4.1f,
                         FlightDate = DateTime.Now.AddDays(1),
                         Aircraft = "Embraer 190",
@@ -216,7 +226,10 @@ namespace OroUostoSystem.Server.DbInitializer
             // ==========================================
             if (!_context.Baggages.Any())
             {
-                var client = _context.Clients.First();
+                var clientUser = await _userManager.FindByEmailAsync("client@gmail.com");
+                var client = await _context.Clients
+                    .FirstOrDefaultAsync(c => c.UserId == clientUser.Id);
+
                 var flights = _context.Flights.ToList();
 
                 var baggageList = new List<Baggage>

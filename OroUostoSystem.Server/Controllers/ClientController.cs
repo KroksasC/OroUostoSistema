@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OroUostoSystem.Server.Data;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using OroUostoSystem.Server.Models.DTO;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -14,6 +17,7 @@ public class ClientController : ControllerBase
     }
 
     // GET: api/clients
+    // UserFilter.jsx
     [HttpGet]
     public async Task<IActionResult> GetAllClients()
     {
@@ -23,13 +27,15 @@ public class ClientController : ControllerBase
             {
                 id = c.Id,
                 firstName = c.User.FirstName,
-                lastName = c.User.LastName
+                lastName = c.User.LastName,
+                email = c.User.Email
             })
             .ToListAsync();
 
         return Ok(clients);
     }
-
+    // GET: api/clients/byUser/{userId}
+    // UserProfile.jsx
     [HttpGet("byUser/{userId}")]
     public async Task<ActionResult<int>> GetClientId(string userId)
     {
@@ -41,4 +47,47 @@ public class ClientController : ControllerBase
         return Ok(client.Id);
     }
 
+    // PUT: api/clients/me
+    // UserProfile.jsx
+    [Authorize]
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateClientDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var client = await _context.Clients
+            .Include(c => c.User)
+            .FirstOrDefaultAsync(c => c.UserId == userId);
+
+        if (client == null)
+            return NotFound("Client not found");
+
+        client.User.FirstName = dto.FirstName;
+        client.User.LastName = dto.LastName;
+        client.User.Email = dto.Email;
+        client.User.PersonalCode = dto.PersonalCode;
+        client.User.PhoneNumber = dto.PhoneNumber;
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    // DELETE: api/clients/{clientId}
+    // AdminClientManagement.jsx
+    [HttpDelete("{clientId}")]
+    public async Task<IActionResult> DeleteClient(int id)
+    {
+        var client = await _context.Clients
+            .Include(c => c.User)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (client == null)
+            return NotFound("Client not found");
+
+        _context.Users.Remove(client.User);
+        _context.Clients.Remove(client);
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }

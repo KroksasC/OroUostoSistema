@@ -73,13 +73,13 @@ namespace OroUostoSystem.Server.Data
                 .IsRequired(false); // Make it nullable
 
             // -----------------------------
-            //  Flight ↔ Routes (1 : many)
+            //  Flight ↔ Routes (many : 1)
             // -----------------------------
-            builder.Entity<Route>()
-                .HasOne(r => r.Flight)
-                .WithMany(f => f.Routes)
-                .HasForeignKey(r => r.FlightId)
-                .OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<Flight>()
+                .HasOne(f => f.Route)
+                .WithMany(r => r.Flights)
+                .HasForeignKey(f => f.RouteId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // -----------------------------
             //  WeatherForecast ↔ Route (many : 1)
@@ -95,7 +95,7 @@ namespace OroUostoSystem.Server.Data
             // -----------------------------
             builder.Entity<ServiceOrder>()
                 .HasOne(o => o.Client)
-                .WithMany()
+                .WithMany(c => c.ServiceOrders)
                 .HasForeignKey(o => o.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
 

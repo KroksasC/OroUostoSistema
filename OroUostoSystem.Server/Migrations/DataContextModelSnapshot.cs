@@ -156,10 +156,10 @@ namespace OroUostoSystem.Server.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("AssignedMainPilot")
+                    b.Property<int?>("AssignedMainPilot")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("AssignedPilot")
+                    b.Property<int?>("AssignedPilot")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("FlightDate")
@@ -169,6 +169,15 @@ namespace OroUostoSystem.Server.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PilotId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("RepeatIntervalHours")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RouteId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -177,6 +186,14 @@ namespace OroUostoSystem.Server.Migrations
                         .HasColumnType("REAL");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AssignedMainPilot");
+
+                    b.HasIndex("AssignedPilot");
+
+                    b.HasIndex("PilotId");
+
+                    b.HasIndex("RouteId");
 
                     b.ToTable("Flights");
                 });
@@ -438,19 +455,15 @@ namespace OroUostoSystem.Server.Migrations
                     b.Property<double>("Duration")
                         .HasColumnType("REAL");
 
-                    b.Property<int>("FlightId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("LandingAirport")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<double>("TakeoffAirport")
-                        .HasColumnType("REAL");
+                    b.Property<string>("TakeoffAirport")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("FlightId");
 
                     b.ToTable("Routes");
                 });
@@ -528,6 +541,9 @@ namespace OroUostoSystem.Server.Migrations
                     b.Property<double>("Humidity")
                         .HasColumnType("REAL");
 
+                    b.Property<double>("Pressure")
+                        .HasColumnType("REAL");
+
                     b.Property<int>("RouteId")
                         .HasColumnType("INTEGER");
 
@@ -598,11 +614,31 @@ namespace OroUostoSystem.Server.Migrations
 
             modelBuilder.Entity("Flight", b =>
                 {
-                    b.HasOne("Pilot", "Pilot")
-                        .WithMany("Flights")
+                    b.HasOne("Pilot", "AssignedMainPilotNavigation")
+                        .WithMany()
+                        .HasForeignKey("AssignedMainPilot")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.Navigation("Pilot");
+                    b.HasOne("Pilot", "AssignedPilotNavigation")
+                        .WithMany()
+                        .HasForeignKey("AssignedPilot")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pilot", null)
+                        .WithMany("Flights")
+                        .HasForeignKey("PilotId");
+
+                    b.HasOne("Route", "Route")
+                        .WithMany("Flights")
+                        .HasForeignKey("RouteId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
+
+                    b.Navigation("AssignedMainPilotNavigation");
+
+                    b.Navigation("AssignedPilotNavigation");
+
+                    b.Navigation("Route");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -667,17 +703,6 @@ namespace OroUostoSystem.Server.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Route", b =>
-                {
-                    b.HasOne("Flight", "Flight")
-                        .WithMany("Routes")
-                        .HasForeignKey("FlightId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Flight");
-                });
-
             modelBuilder.Entity("Service", b =>
                 {
                     b.HasOne("Employee", "Employee")
@@ -737,8 +762,6 @@ namespace OroUostoSystem.Server.Migrations
             modelBuilder.Entity("Flight", b =>
                 {
                     b.Navigation("Baggages");
-
-                    b.Navigation("Routes");
                 });
 
             modelBuilder.Entity("OroUostoSystem.Server.Models.User", b =>
@@ -757,6 +780,8 @@ namespace OroUostoSystem.Server.Migrations
 
             modelBuilder.Entity("Route", b =>
                 {
+                    b.Navigation("Flights");
+
                     b.Navigation("WeatherForecasts");
                 });
 

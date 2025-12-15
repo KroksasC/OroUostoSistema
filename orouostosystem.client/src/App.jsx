@@ -8,8 +8,8 @@ import RoutesList from './pages/RoutesList'
 import AddRoute from './pages/AddRoute'
 import ServicesList from './pages/ServicesList'
 import UserEdit from './pages/UserEdit'
-import UserFlightHistory from './pages/UserFlightHistory'
-import UserLoyaltyProgram from './pages/UserLoyaltyProgram'
+import ClientServiceHistory from './pages/ClientServiceHistory'
+import ClientLoyaltyProgram from './pages/ClientLoyaltyProgram'
 import UserFilter from './pages/UserFilter'
 import FlightsListPilots from './pages/FlightsListPilots';
 
@@ -30,8 +30,8 @@ export default function App() {
 
     {/* User pages */}
       <Route path="/userEdit" element={<UserEdit />} />
-      <Route path="/userFlightHistory" element={<UserFlightHistory />} />
-      <Route path="/userLoyaltyProgram" element={<UserLoyaltyProgram />} />
+      <Route path="/clientServiceHistory" element={<ClientServiceHistory />} />
+      <Route path="/clientLoyaltyProgram" element={<ClientLoyaltyProgram />} />
       <Route path="/userFilter" element={<UserFilter />} />
     </Routes>
   )

@@ -14,6 +14,5 @@ public class Pilot
     public User User { get; set; }
 
     // Navigation
-    //asdfasdf
     public ICollection<Flight> Flights { get; set; } = new List<Flight>();
 }

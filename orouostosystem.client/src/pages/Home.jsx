@@ -112,12 +112,14 @@ export default function Home() {
               >
                 Routes List
               </button>
-              <button
-                className="btn btn-success mb-2 w-100"
-                onClick={() => navigate("/addRoute")}
-              >
-                Add Route
-              </button>
+              {(isWorker || isAdmin) && (
+                <button
+                  className="btn btn-success mb-2 w-100"
+                  onClick={() => navigate("/addRoute")}
+                >
+                  Add Route
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -146,8 +148,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-
-      <SearchLuggageModal
+            <SearchLuggageModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />

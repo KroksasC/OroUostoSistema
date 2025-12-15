@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace OroUostoSystem.Server.Migrations
 {
-    /// <inheritdoc />asdf
+    /// <inheritdoc />
     public partial class AddAllEntities : Migration
     {
         /// <inheritdoc />
@@ -118,41 +118,31 @@ namespace OroUostoSystem.Server.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
-migrationBuilder.CreateTable(
-    name: "Flights",
-    columns: table => new
-    {
-        Id = table.Column<int>(type: "INTEGER", nullable: false)
-            .Annotation("Sqlite:Autoincrement", true),
-
-        AssignedPilot = table.Column<int>(type: "INTEGER", nullable: true),
-        AssignedMainPilot = table.Column<int>(type: "INTEGER", nullable: true),
-
-        WorkingHours = table.Column<float>(type: "REAL", nullable: false),
-        FlightDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-        Aircraft = table.Column<string>(type: "TEXT", nullable: false),
-        FlightNumber = table.Column<string>(type: "TEXT", nullable: false),
-        Status = table.Column<string>(type: "TEXT", nullable: false)
-    },
-    constraints: table =>
-    {
-        table.PrimaryKey("PK_Flights", x => x.Id);
-
-        table.ForeignKey(
-            name: "FK_Flights_Pilots_AssignedPilot",
-            column: x => x.AssignedPilot,
-            principalTable: "Pilots",
-            principalColumn: "Id",
-            onDelete: ReferentialAction.SetNull);
-
-        table.ForeignKey(
-            name: "FK_Flights_Pilots_AssignedMainPilot",
-            column: x => x.AssignedMainPilot,
-            principalTable: "Pilots",
-            principalColumn: "Id",
-            onDelete: ReferentialAction.SetNull);
-    });
-
+            migrationBuilder.CreateTable(
+                name: "Flights",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    AssignedPilot = table.Column<bool>(type: "INTEGER", nullable: false),
+                    AssignedMainPilot = table.Column<bool>(type: "INTEGER", nullable: false),
+                    WorkingHours = table.Column<float>(type: "REAL", nullable: false),
+                    FlightDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Aircraft = table.Column<string>(type: "TEXT", nullable: false),
+                    FlightNumber = table.Column<string>(type: "TEXT", nullable: false),
+                    Status = table.Column<string>(type: "TEXT", nullable: false),
+                    PilotId = table.Column<int>(type: "INTEGER", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Flights", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Flights_Pilots_PilotId",
+                        column: x => x.PilotId,
+                        principalTable: "Pilots",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
 
             migrationBuilder.CreateTable(
                 name: "ServiceOrders",
@@ -309,6 +299,10 @@ migrationBuilder.CreateTable(
                 column: "UserId",
                 unique: true);
 
+            migrationBuilder.CreateIndex(
+                name: "IX_Flights_PilotId",
+                table: "Flights",
+                column: "PilotId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Pilots_UserId",
